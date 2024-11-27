@@ -46,7 +46,7 @@
 
 // title of these windows:
 
-const char *WINDOWTITLE = "CS450 Project 6 - Mishan Wong";
+const char *WINDOWTITLE = "CS450 Final Project- Mishan Wong";
 const char *GLUITITLE   = "User Interface Window";
 
 // what the glui package defines as true and false:
@@ -60,11 +60,8 @@ const int ESCAPE = 0x1b;
 
 // initial window size:
 
-const int INIT_WINDOW_SIZE = 600;
+const int INIT_WINDOW_SIZE = 1200;
 
-// size of the 3d box to be drawn:
-
-const float BOXSIZE = 2.f;
 
 // multiplication factors for input interaction:
 //  (these are known from previous experience)
@@ -109,7 +106,7 @@ enum ButtonVals
 
 // window background color (rgba):
 
-const GLfloat BACKCOLOR[ ] = { 0., 0., 0., 1. };
+const GLfloat BACKCOLOR[ ] = { 0.59, 0.808, 0.922, 1. };
 
 // line width for the axes:
 
@@ -194,9 +191,6 @@ int		ShadowsOn;				// != 0 means to turn shadows on
 float	Time;					// used for animation, this has a value between 0. and 1.
 int		Xmouse, Ymouse;			// mouse values
 float	Xrot, Yrot;				// rotation angles in degrees
-GLuint 	SalmonDL;
-float 	NowAmp, NowFreq, NowSpeed;
-
 
 // function prototypes:
 
@@ -274,29 +268,6 @@ MulArray3(float factor, float a, float b, float c )
 	return array;
 }
 
-struct salmonMenu {
-	char* label;
-	float value;
-};
-struct salmonMenu SalmonAmplitudeMenus[4] = {
-	{"0.5", 0.5},
-	{"1.0", 1.0},
-	{"1.5", 1.5},
-	{"2.0", 2.f}
-};
-struct salmonMenu SalmonSpeedMenus[5] = {
-	{"1.0", 1.0},
-	{"2.0", 2.0},
-	{"3.0", 3.0},
-	{"4.0", 4.0},
-	{"5.0", 5.0}
-};
-struct salmonMenu SalmonFreqMenus[4] = {
-	{"0.25", 0.25},
-	{"0.5", 0.5},
-	{"0.75", 0.75},
-	{"1.0", 1.0}
-};
 // these are here for when you need them -- just uncomment the ones you need:
 
 //#include "setmaterial.cpp"
@@ -309,7 +280,6 @@ struct salmonMenu SalmonFreqMenus[4] = {
 //#include "keytime.cpp"
 #include "glslprogram.cpp"
 
-GLSLProgram Salmon;
 
 // main program:
 
@@ -431,7 +401,7 @@ Display( )
 
 	// set the eye position, look-at position, and up-vector:
 
-	gluLookAt( 0.f, 0.f, 3.f,     0.f, 0.f, 0.f,     0.f, 1.f, 0.f );
+	gluLookAt( 0.f, 0.7f, 2.f,     0.f, 0.f, 0.f,     0.f, 1.f, 0.f );
 
 	// rotate the scene:
 
@@ -473,19 +443,27 @@ Display( )
 	glEnable( GL_NORMALIZE );
 
 
-	// draw the box object by calling up its display list:
+	// Draw the flat plane with triangle mesh
+	float W = 1.5;
+	float H = 1.5;
+	float scale = 0.05f ;
+	int cols = W / scale;
+	int rows = H / scale;
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	Salmon.Use(); //Turns the Salmon shader program on
-	// float amp = 0.5f; // sine wave amplitude
-	// float freq = 2.f; // sine wave frequency
-	// float speed = 3.f;
+	glColor3f(0, 0, 0);
+	for (int z = 0; z < rows; z++) {
+		glBegin(GL_TRIANGLE_STRIP); 
+		
+		for (int x = 0; x < cols; x++) {
+			glVertex3f(x * scale, 0, -z * scale);
+			glVertex3f(x * scale, 0, -(z + 1) * scale);
+		}
+		glEnd();
+	}
 
-	Salmon.SetUniformVariable("uTime", Time);
-	Salmon.SetUniformVariable("uAmp", NowAmp);
-	Salmon.SetUniformVariable("uSpeed", NowSpeed);
-	Salmon.SetUniformVariable("uFreq", NowFreq);
-	glCallList(SalmonDL);
-	Salmon.UnUse(); // go back to fixed-function OpenGL
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 
 
 #ifdef DEMO_Z_FIGHTING
@@ -637,28 +615,6 @@ DoProjectMenu( int id )
 	glutSetWindow( MainWindow );
 	glutPostRedisplay( );
 }
-
-void
-DoAmplitudeMenu(int amplitude)
-{
-	NowAmp = SalmonAmplitudeMenus[amplitude].value;
-	glutSetWindow(MainWindow);
-	glutPostRedisplay();
-}
-
-void DoSpeedMenu(int speed) 
-{
-	NowSpeed = SalmonSpeedMenus[speed].value;
-	glutSetWindow(MainWindow);
-	glutPostRedisplay();
-}
-
-void DoFreqMenu(int freq) 
-{
-	NowFreq = SalmonFreqMenus[freq].value;
-	glutSetWindow(MainWindow);
-	glutPostRedisplay();
-}
 // use glut to display a string of characters using a raster font:
 
 void
@@ -728,24 +684,6 @@ InitMenus( )
 	glutAddMenuEntry( "Off",  0 );
 	glutAddMenuEntry( "On",   1 );
 
-	int amplitudeMenu = glutCreateMenu(DoAmplitudeMenu);
-	int length = sizeof(SalmonAmplitudeMenus) / sizeof(SalmonAmplitudeMenus[0]);
-	for (int i = 0; i < length; i++) {
-		glutAddMenuEntry(SalmonAmplitudeMenus[i].label, i);
-	};
-
-	int speedMenu = glutCreateMenu(DoSpeedMenu);
-	int length2 = sizeof(SalmonSpeedMenus) / sizeof(SalmonSpeedMenus[0]);
-	for (int i = 0; i < length2; i++) {
-		glutAddMenuEntry(SalmonSpeedMenus[i].label, i);
-	};
-
-	int freqMenu = glutCreateMenu(DoFreqMenu);
-	int length3 = sizeof(SalmonFreqMenus) / sizeof(SalmonFreqMenus[0]);
-	for (int i = 0; i < length3; i++) {
-		glutAddMenuEntry(SalmonFreqMenus[i].label, i);
-	};
-
 	int depthcuemenu = glutCreateMenu( DoDepthMenu );
 	glutAddMenuEntry( "Off",  0 );
 	glutAddMenuEntry( "On",   1 );
@@ -769,9 +707,6 @@ InitMenus( )
 	int mainmenu = glutCreateMenu( DoMainMenu );
 	glutAddSubMenu(   "Axes",          axesmenu);
 	glutAddSubMenu(   "Axis Colors",   colormenu);
-	glutAddSubMenu("Amplitude", amplitudeMenu);
-	glutAddSubMenu("Frequency", freqMenu);
-	glutAddSubMenu("Speed", speedMenu);
 
 
 #ifdef DEMO_DEPTH_BUFFER
@@ -886,18 +821,6 @@ InitGraphics( )
 #endif
 
 	// all other setups go here, such as GLSLProgram and KeyTime setups:
-	Salmon.Init();
-	bool valid = Salmon.Create("salmon.vert", "salmon.frag");
-	if (!valid) {
-		fprintf(stderr, "Yuch! The Salmon shader did not compile.\n");
-	} else {
-		fprintf(stderr, "Woo-Hoo! The Salmon shader compiled.\n");
-	}
-
-	Salmon.SetUniformVariable("uKa", 0.1f); // all 3 should add up to 1.0
-	Salmon.SetUniformVariable("uKd", 0.4f);
-	Salmon.SetUniformVariable("uKs", 0.5f);
-	Salmon.SetUniformVariable("uShininess", 120.f);
 
 }
 
@@ -916,10 +839,6 @@ InitLists( )
 	glutSetWindow( MainWindow );
 
 	// create the object:
-	SalmonDL = glGenLists(1);
-	glNewList(SalmonDL, GL_COMPILE);
-		LoadObjFile((char *) "salmon_high.obj");
-	glEndList();
 
 	// create the axes:
 
@@ -1081,9 +1000,6 @@ Reset( )
 	NowColor = YELLOW;
 	NowProjection = PERSP;
 	Xrot = Yrot = 0.;
-	NowAmp = 0.5f;
-	NowFreq = 1.f;
-	NowSpeed = 1.f;
 }
 
 
