@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <vector>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -192,6 +193,15 @@ float	Time;					// used for animation, this has a value between 0. and 1.
 int		Xmouse, Ymouse;			// mouse values
 float	Xrot, Yrot;				// rotation angles in degrees
 
+// Constants for the terrain grid
+const float W = 3.;
+const float H = 3.;
+const float scale = 0.05f ;
+const int cols = W * 2 / scale;
+const int rows = H * 2/ scale;
+float heightmap[rows][cols];
+
+
 // function prototypes:
 
 void	Animate( );
@@ -224,6 +234,15 @@ void			Cross(float[3], float[3], float[3]);
 float			Dot(float [3], float [3]);
 float			Unit(float [3], float [3]);
 float			Unit(float [3]);
+
+float
+Ranf( float low, float high )
+{
+        float r = (float) rand();               // 0 - RAND_MAX
+        float t = r  /  (float) RAND_MAX;       // 0. - 1.
+
+        return   low  +  t * ( high - low );
+}
 
 
 // utility to create an array from 3 separate values:
@@ -270,15 +289,16 @@ MulArray3(float factor, float a, float b, float c )
 
 // these are here for when you need them -- just uncomment the ones you need:
 
-//#include "setmaterial.cpp"
-//#include "setlight.cpp"
+#include "setmaterial.cpp"
+#include "setlight.cpp"
 //#include "osusphere.cpp"
 //#include "osucone.cpp"
 //#include "osutorus.cpp"
 //#include "bmptotexture.cpp"
-#include "loadobjfile.cpp"
+// #include "loadobjfile.cpp"
 //#include "keytime.cpp"
-#include "glslprogram.cpp"
+// #include "glslprogram.cpp"
+#include "perlin_noise.cpp"
 
 
 // main program:
@@ -349,6 +369,8 @@ Animate( )
 
 // draw the complete scene:
 
+
+
 void
 Display( )
 {
@@ -401,7 +423,7 @@ Display( )
 
 	// set the eye position, look-at position, and up-vector:
 
-	gluLookAt( 0.f, 0.7f, 2.f,     0.f, 0.f, 0.f,     0.f, 1.f, 0.f );
+	gluLookAt( 0.f, 0.7f, 0.f,     0.f, 0.f, -10.f,     0.f, 1.f, 0.f );
 
 	// rotate the scene:
 
@@ -444,25 +466,25 @@ Display( )
 
 
 	// Draw the flat plane with triangle mesh
-	float W = 1.5;
-	float H = 1.5;
-	float scale = 0.05f ;
-	int cols = W / scale;
-	int rows = H / scale;
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	
+	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glEnable(GL_LIGHTING);
+	SetPointLight(GL_LIGHT0, 3, 3, 3, 1, 1, 1);
+	SetMaterial(0.f, 0.6f, 0.1f, 10);
 
-	glColor3f(0, 0, 0);
-	for (int z = 0; z < rows; z++) {
+	// glColor3f(0, 1, 0);
+	glTranslatef(-W, 0, -2*H);
+	for (int z = 0; z < rows - 1; z++) {
 		glBegin(GL_TRIANGLE_STRIP); 
 		
 		for (int x = 0; x < cols; x++) {
-			glVertex3f(x * scale, 0, -z * scale);
-			glVertex3f(x * scale, 0, -(z + 1) * scale);
+			glVertex3f(x * scale, heightmap[x][z], z * scale);
+			glVertex3f(x * scale, heightmap[x][z+1], (z + 1) * scale);
 		}
 		glEnd();
 	}
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glDisable(GL_LIGHTING);
+	// glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 
 
@@ -821,6 +843,18 @@ InitGraphics( )
 #endif
 
 	// all other setups go here, such as GLSLProgram and KeyTime setups:
+	std::vector<int> permutation = generatePermutation();
+
+	float zoff = 0.001;
+	for (int z = 0; z < cols; z++) {
+		float xoff = 0.001;
+		for (int x = 0; x < rows; x++) {
+			heightmap[x][z] = perlinNoise(xoff, zoff, permutation);
+			xoff += 0.02;
+		}
+		zoff += 0.02;
+	}
+
 
 }
 
