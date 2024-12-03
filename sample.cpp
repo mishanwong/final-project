@@ -107,8 +107,7 @@ enum ButtonVals
 
 // window background color (rgba):
 
-// const GLfloat BACKCOLOR[ ] = { 0.59, 0.808, 0.922, 1. };
-const GLfloat BACKCOLOR[ ] = { 1., 1., 1., 1. };
+const GLfloat BACKCOLOR[ ] = { 0., 0., 0., 1. };
 
 // line width for the axes:
 
@@ -430,7 +429,7 @@ Display( )
 
 	// set the eye position, look-at position, and up-vector:
 
-	gluLookAt( 0.f, 0.7f, 0.f,     0.f, 0.f, -10.f,     0.f, 1.f, 0.f );
+	gluLookAt( 0.f, 0.0f, 3.f,     0.f, 0.f, 0.f,     0.f, 1.f, 0.f );
 
 	// rotate the scene:
 
@@ -472,69 +471,10 @@ Display( )
 	glEnable( GL_NORMALIZE );
 
 	// Draw object here
-	// Draw the terrain 
-	
-	// glEnable(GL_LIGHTING);
-	// glShadeModel(GL_SMOOTH);
-	// SetPointLight(GL_LIGHT0, 3, 3, 3, 1, 1, 1);
-	// SetMaterial(0.51f, 0.31f, 0.11f, 10);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glPushMatrix();
-	glTranslatef(-W, 0, -2*H);
-	glColor3f(0., 0., 0.);
-	// Drawing the colored plane
-	for (int z = 0; z < rows - 1; z++) {
-		glBegin(GL_TRIANGLE_STRIP); 
-		
-		for (int x = 0; x < cols; x++) {
-			// glVertex3f(x * scale, heightmap[x][z], z * scale);
-			// glVertex3f(x * scale, heightmap[x][z+1], (z + 1) * scale);
-
-			glVertex3f(x * scale, 0., z * scale);
-			glVertex3f(x * scale, 0, (z + 1) * scale);
-		}
-		glEnd();
-	}
 
 
-	glPopMatrix();
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	// Draw one blade of grass
-	// SetMaterial(0.08, 0.53, 0.09, 10);
-	glColor3f(0.08, 0.53, 0.09);
-
-	for (int x = 0; x < cols; x++) {
-		for (int z = 0; z < rows; z++) {
-			glPushMatrix();
-			glTranslatef(x * scale * 3, 0, z * scale * 3);
-			glTranslatef(-W, 0, -2*H);
-			glScalef(0.25, 0.5, 0.25);
-			grassInstance();
-			glPopMatrix();
-		}
-	}
-	
-
-	//glDisable(GL_LIGHTING);
 
 
-	// Drawing the triangle mesh
-	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	// glPushMatrix();
-	// glTranslatef(-W, 0, -2*H);
-	// glColor3f(0, 0, 0);
-	// for (int z = 0; z < rows; z++) {
-	// 	glBegin(GL_TRIANGLE_STRIP); 
-		
-	// 	for (int x = 0; x < cols; x++) {
-	// 		glVertex3f(x * scale, 0, -z * scale);
-	// 		glVertex3f(x * scale, 0, -(z + 1) * scale);
-	// 	}
-	// 	glEnd();
-	// }
-	// glPopMatrix();
-	// glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 #ifdef DEMO_Z_FIGHTING
 	if( DepthFightingOn != 0 )
@@ -853,9 +793,9 @@ InitGraphics( )
 	glutDisplayFunc( Display );
 	glutReshapeFunc( Resize );
 	glutKeyboardFunc( Keyboard );
-	//glutMouseFunc( MouseButton );
-	//glutMotionFunc( MouseMotion );
-	//glutPassiveMotionFunc(MouseMotion);
+	glutMouseFunc( MouseButton );
+	glutMotionFunc( MouseMotion );
+	glutPassiveMotionFunc(MouseMotion);
 	//glutPassiveMotionFunc( NULL );
 	glutVisibilityFunc( Visibility );
 	glutEntryFunc( NULL );
