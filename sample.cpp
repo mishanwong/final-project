@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <string>
 #include <stack>
+#include <unistd.h> // Required for sleep (POSIX only)
+
 
 #define GLM_FORCE_RADIANS
 #include "glm/vec2.hpp"
@@ -397,8 +399,30 @@ std::unordered_map<char, std::string> rules = {
 	{'F', "FF+[+F-<F->F]-[-F+^F+vF]"},
 };
 
-float len = 0.1;
-float angle = 25;
+// 3-D bushes from book
+// std::unordered_map<char, std::string> rules = {
+// 	{'A', "[&FL!A]/////`[&FL!A]///////`[&FL!A]"}, // Create 3 new branches
+// 	{'F', "S ///// F"},
+// 	{'S', "FL"},
+// 	{'L', "[```^^|]"} // Leaf
+// 	// {'L', "[```^^{-f+f+f-|-f+f+f}]"} // Leaf
+// };
+
+// Hilbert curve from book
+// std::unordered_map<char, std::string> rules = {
+// 	{'A', "B-F+CFC+F-D&F^D-F+&&CFC+F+B//"}, 
+// 	{'B', "A&F^CFB^F^D^^-F-D^|F^B|FC^F^A//"},
+// 	{'C', "|D^|F^B-F+C^F^A&&FA&F^C+F+B^F^D//"},
+// 	{'D', "|CFB-F+B|FA&F^A&&FB-F+B|FC//"} 
+// };
+
+// Hilbert curve from here https://jsantell.com/l-systems/
+// std::unordered_map<char, std::string> rules = {
+// 	{'X', "^///XF^///XFX-F^//XFX&F+//XFX-F/X-/"}
+// };
+float len = 0.3;	
+float angle = 22.5;
+// std::string word = "[&F][/F][^F][\\F]";
 std::string word = "F";
 int numIter = 5;
 
@@ -420,12 +444,15 @@ struct State {
 	glm::vec3 position; 
 	glm::vec3 dir;
 };
+
 glm::vec3 Xaxis = {1., 0., 0.};
 glm::vec3 Yaxis = {0., 1., 0.};
 glm::vec3 Zaxis = {0., 0., 1.};
 
 std::stack<State> s; 
+
 State currentState;
+
 void drawLine() {
 	glm::vec3 endPoint = currentState.position + glm::normalize(currentState.dir) * len;
 
@@ -436,6 +463,18 @@ void drawLine() {
 
 	currentState.position = endPoint;
 	
+}
+
+void drawShorterLine() {
+	glm::vec3 endPoint = currentState.position + (glm::normalize(currentState.dir) * (0.5f * len));
+
+    glBegin(GL_LINES);
+    	glVertex3f(currentState.position.x, currentState.position.y, currentState.position.z);  
+    	glVertex3f(endPoint.x, endPoint.y, endPoint.z);  
+    glEnd();
+
+	currentState.position = endPoint;
+
 }
 
 void rotate(float angle, glm::vec3 axis) {
@@ -452,23 +491,26 @@ void draw(char rule) {
 		case 'F':
 			drawLine();
 			break;
+		case 'f':
+			drawShorterLine();
+			break;
 		case '-':
-			rotate(-angle, Zaxis);
+			rotate(angle, Zaxis);
 			break;	
 		case '+':
-			rotate(angle, Zaxis);
+			rotate(-angle, Zaxis);
 			break;
 		case '<':
-			rotate(angle, Yaxis);
-			break;
-		case '>':
 			rotate(-angle, Yaxis);
 			break;
+		case '>':
+			rotate(angle, Yaxis);
+			break;
 		case '^':
-			rotate(-angle, Xaxis);
+			rotate(angle, Xaxis);
 			break;
 		case 'v':
-			rotate(angle, Xaxis);
+			rotate(-angle, Xaxis);
 			break;
 		case '[':
 			s.push(currentState);
@@ -480,6 +522,49 @@ void draw(char rule) {
 			}	
 			break;
 	}
+}
+
+// Rules to draw 3D bushes from the book
+void draw2(char rule) {
+	switch (rule) {
+		case 'F':
+			drawLine();
+			break;
+		case '-':
+			rotate(-angle, Yaxis); // Turn right
+			break;	
+		case '+':
+			rotate(angle, Yaxis); // Turn left
+			break;
+		case '&':
+			rotate(-angle, Xaxis); // Pitch down
+			break;
+		case '^':
+			rotate(+angle, Xaxis); // Pitch up
+			break;
+		case '/':
+			rotate(-angle, Zaxis); // Roll right
+			break;
+		case '\\':
+			rotate(angle, Zaxis); // Roll left
+			break;
+		case '|':
+			rotate(180, Yaxis); // Turn around
+			break;
+		case '[':
+			s.push(currentState);
+			break;
+		case ']':
+			if (!s.empty()) {
+				currentState = s.top();
+				s.pop();
+			}	
+			break;
+		case 'L':
+			break;
+		default:
+			break;
+	}	
 }
 
 void
@@ -592,7 +677,7 @@ Display( )
 
 	glEnable( GL_NORMALIZE );
 	currentState = {
-		glm::vec3(0., -5., 0.),
+		glm::vec3(0., 0., 0.),
 		glm::vec3(0., 1., 0.),
 	};
 
@@ -965,6 +1050,7 @@ InitGraphics( )
 	for (int i = 0; i < numIter; i++) {
 		word = generate();
 	}
+	std::cout << "Word: " << word << std::endl;
 }
 
 
