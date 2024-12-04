@@ -7,6 +7,14 @@
 #include <string>
 #include <stack>
 
+#define GLM_FORCE_RADIANS
+#include "glm/vec2.hpp"
+#include "glm/vec3.hpp"
+#include "glm/mat4x4.hpp"
+#include "glm/gtc/matrix_transform.hpp"  
+#include "glm/gtc/matrix_inverse.hpp" 
+#include <glm/gtc/type_ptr.hpp>          
+
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -197,6 +205,7 @@ int		ShadowsOn;				// != 0 means to turn shadows on
 float	Time;					// used for animation, this has a value between 0. and 1.
 int		Xmouse, Ymouse;			// mouse values
 float	Xrot, Yrot;				// rotation angles in degrees
+const float D2R = M_PI / 180.f;
 
 // Constants for the terrain grid
 const float W = 3.;
@@ -381,14 +390,22 @@ void print(std::string str) {
 // 	{'F', "FF"}
 // };
 
+//2-D tree from Prof Bailey
 std::unordered_map<char, std::string> rules = {
 	{'F', "FF+[+F-F-F]-[-F+F+F]"}
 };
 
-float len = 0.1;
+// 3-D tree from Prof Baily
+
+// std::unordered_map<char, std::string> rules = {
+	// {'F', "FF+[+F-<F->F]-[-F+^F+vF]"}
+	// {'F', "FF+F"}
+// };
+
+float len = 0.3;
 float angle = 25;
 std::string word = "F";
-int numIter = 4;
+int numIter = 5;
 
 // Recursively generate L-system word
 std::string generate() {
@@ -404,33 +421,45 @@ std::string generate() {
 	return newWord;
 };
 
-// Define a struct to hold the x, y, z coordinates and angle
 struct State {
-    float x;
-	float y;
-	float z;   // Position coordinates
-    float angle;     // Orientation angle in degree
+	glm::vec3 position; 
+	glm::vec3 Xdir;
+	glm::vec3 Ydir;
+	glm::vec3 Zdir;
 };
+glm::vec3 Xaxis = {1., 0., 0.};
+glm::vec3 Yaxis = {0., 1., 0.};
+glm::vec3 Zaxis = {0., 0., 1.};
 
-std::stack<State> s; // Declare a stack of integers
+std::stack<State> s; 
 State currentState;
 void drawLine() {
-	glPushMatrix();
-	glBegin(GL_LINES);
-		glVertex3f(currentState.x, currentState.y, currentState.z);
-		currentState.x += len * sin(currentState.angle * M_PI / 180);
-		currentState.y += len * cos(currentState.angle * M_PI / 180);
-		glVertex3f(currentState.x, currentState.y, currentState.z);
-	glEnd();
-	glPopMatrix();
+	// glm::vec3 movement = currentState.Xdir * dx + currentState.Ydir * dy + currentState.Zdir * dz;
+	// glm::vec3 endPoint = currentState.position + movement;
+	glm::vec3 movement = glm::normalize(currentState.Xdir) * len +
+							glm::normalize(currentState.Ydir) * len +
+							glm::normalize(currentState.Zdir) * len;
+
+    // glm::vec3 endPoint = currentState.position + glm::normalize(currentState.Zdir) * len;
+	glm::vec3 endPoint = currentState.position + movement;
+
+    glBegin(GL_LINES);
+    	glVertex3f(currentState.position.x, currentState.position.y, currentState.position.z);  
+    	glVertex3f(endPoint.x, endPoint.y, endPoint.z);  
+    glEnd();
+
+	currentState.position = endPoint;
 	
 }
 
-void rotateRight() {
-	currentState.angle -= angle;
-}
-void rotateLeft() {
-	currentState.angle += angle;
+void rotate(float angle, glm::vec3 axis) {
+	// Create a rotation matrix
+	glm::mat4 identity = glm::mat4(1.0f);
+	glm::mat4 rotationMatrix = glm::rotate(identity, glm::radians(angle), axis);
+
+	// Rotate the direction vector
+	currentState.Zdir = glm::vec3(rotationMatrix * glm::vec4(currentState.Zdir, 0.0f));
+
 }
 
 // Draw the plant according to rules
@@ -438,9 +467,17 @@ void draw(char rule) {
 	if (rule == 'F') {
 		drawLine();
 	} else if (rule == '-') {
-		rotateLeft();
+		rotate(angle, Yaxis);
 	} else if (rule == '+') {
-		rotateRight();
+		rotate(-angle, Yaxis);
+	} else if (rule == '<') {
+		rotate(angle, Xaxis);
+	} else if (rule == '>') {
+		rotate(-angle, Xaxis);
+	} else if (rule == '^') {
+		rotate(angle, Zaxis);
+	} else if (rule == 'v') {
+		rotate(-angle, Zaxis);
 	} else if (rule == '[') {
 		s.push(currentState);
 	} else if (rule == ']') {
@@ -491,10 +528,17 @@ Display( )
 
 	glMatrixMode( GL_PROJECTION );
 	glLoadIdentity( );
+
+	glm::mat4 projection;
 	if( NowProjection == ORTHO )
-		glOrtho( -2.f, 2.f,     -2.f, 2.f,     0.1f, 1000.f );
+		//glOrtho( -2.f, 2.f,     -2.f, 2.f,     0.1f, 1000.f );
+		projection = glm::ortho( -2.f, 2.f,     -2.f, 2.f,     0.1f, 1000.f );
 	else
-		gluPerspective( 70.f, 1.f,	0.1f, 1000.f );
+		//gluPerspective( 70.f, 1.f,	0.1f, 1000.f );
+		projection = glm::perspective(70.f, 1.f, 0.1f, 1000.f);
+
+	// apply the projection matrix
+	glMultMatrixf(glm::value_ptr(projection));
 
 	// place the objects into the scene:
 
@@ -502,19 +546,29 @@ Display( )
 	glLoadIdentity( );
 
 	// set the eye position, look-at position, and up-vector:
+	glm::vec3 eye(0., 0., 3.);
+	glm::vec3 look(0., 0., 0.);
+	glm::vec3 up(0., 1., 0.);
+	glm::mat4 modelview = glm::lookAt(eye, look, up);
 
-	gluLookAt( 0.f, 0.0f, 3.f,     0.f, 0.f, 0.f,     0.f, 1.f, 0.f );
+	// gluLookAt( 0.f, 0.0f, 3.f,     0.f, 0.f, 0.f,     0.f, 1.f, 0.f );
 
 	// rotate the scene:
 
-	glRotatef( (GLfloat)Yrot, 0.f, 1.f, 0.f );
-	glRotatef( (GLfloat)Xrot, 1.f, 0.f, 0.f );
+	//glRotatef( (GLfloat)Yrot, 0.f, 1.f, 0.f );
+	//glRotatef( (GLfloat)Xrot, 1.f, 0.f, 0.f );
+	modelview = glm::rotate(modelview, D2R * Yrot, glm::vec3(0., 1., 0.));
+	modelview = glm::rotate(modelview, D2R * Xrot, glm::vec3(1., 0., 0.));
 
 	// uniformly scale the scene:
 
 	if( Scale < MINSCALE )
 		Scale = MINSCALE;
-	glScalef( (GLfloat)Scale, (GLfloat)Scale, (GLfloat)Scale );
+	//glScalef( (GLfloat)Scale, (GLfloat)Scale, (GLfloat)Scale );
+	modelview = glm::scale(modelview, glm::vec3(Scale, Scale, Scale));
+
+	// apply the modelview matrix:
+	glMultMatrixf(glm::value_ptr(modelview));
 
 	// set the fog parameters:
 
@@ -543,7 +597,12 @@ Display( )
 	// since we are using glScalef( ), be sure the normals get unitized:
 
 	glEnable( GL_NORMALIZE );
-	currentState = {0., -1., 0., 0.};
+	currentState = {
+		glm::vec3(0., -2., 0.), // Start at the origin
+		glm::vec3(1., 0., 0.), // X-direction vector 
+		glm::vec3(0., 1., 0.), // Y-direction vector
+		glm::vec3(0., 0., 1.) // Z-direction vector
+	};
 
 	// Draw object here
 	// Iterate over the word and draw
@@ -552,7 +611,6 @@ Display( )
 		char c = word[i];
 		draw(c);
 	}
-	
 
 
 
