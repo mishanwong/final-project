@@ -380,9 +380,6 @@ Animate( )
 	glutPostRedisplay( );
 }
 
-void print(std::string str) {
-	std::cout << str << std::endl;
-}
 
 // Variables for L-System
 // std::unordered_map<char, std::string> rules = {
@@ -391,18 +388,16 @@ void print(std::string str) {
 // };
 
 //2-D tree from Prof Bailey
-std::unordered_map<char, std::string> rules = {
-	{'F', "FF+[+F-F-F]-[-F+F+F]"}
-};
-
-// 3-D tree from Prof Baily
-
 // std::unordered_map<char, std::string> rules = {
-	// {'F', "FF+[+F-<F->F]-[-F+^F+vF]"}
-	// {'F', "FF+F"}
+// 	{'F', "FF+[+F-F-F]-[-F+F+F]"}
 // };
 
-float len = 0.3;
+// 3-D tree from Prof Baily
+std::unordered_map<char, std::string> rules = {
+	{'F', "FF+[+F-<F->F]-[-F+^F+vF]"},
+};
+
+float len = 0.1;
 float angle = 25;
 std::string word = "F";
 int numIter = 5;
@@ -423,9 +418,7 @@ std::string generate() {
 
 struct State {
 	glm::vec3 position; 
-	glm::vec3 Xdir;
-	glm::vec3 Ydir;
-	glm::vec3 Zdir;
+	glm::vec3 dir;
 };
 glm::vec3 Xaxis = {1., 0., 0.};
 glm::vec3 Yaxis = {0., 1., 0.};
@@ -434,14 +427,7 @@ glm::vec3 Zaxis = {0., 0., 1.};
 std::stack<State> s; 
 State currentState;
 void drawLine() {
-	// glm::vec3 movement = currentState.Xdir * dx + currentState.Ydir * dy + currentState.Zdir * dz;
-	// glm::vec3 endPoint = currentState.position + movement;
-	glm::vec3 movement = glm::normalize(currentState.Xdir) * len +
-							glm::normalize(currentState.Ydir) * len +
-							glm::normalize(currentState.Zdir) * len;
-
-    // glm::vec3 endPoint = currentState.position + glm::normalize(currentState.Zdir) * len;
-	glm::vec3 endPoint = currentState.position + movement;
+	glm::vec3 endPoint = currentState.position + glm::normalize(currentState.dir) * len;
 
     glBegin(GL_LINES);
     	glVertex3f(currentState.position.x, currentState.position.y, currentState.position.z);  
@@ -453,38 +439,46 @@ void drawLine() {
 }
 
 void rotate(float angle, glm::vec3 axis) {
-	// Create a rotation matrix
 	glm::mat4 identity = glm::mat4(1.0f);
 	glm::mat4 rotationMatrix = glm::rotate(identity, glm::radians(angle), axis);
 
-	// Rotate the direction vector
-	currentState.Zdir = glm::vec3(rotationMatrix * glm::vec4(currentState.Zdir, 0.0f));
+	currentState.dir = glm::vec3(rotationMatrix * glm::vec4(currentState.dir, 0.0f));
 
 }
 
 // Draw the plant according to rules
 void draw(char rule) {
-	if (rule == 'F') {
-		drawLine();
-	} else if (rule == '-') {
-		rotate(angle, Yaxis);
-	} else if (rule == '+') {
-		rotate(-angle, Yaxis);
-	} else if (rule == '<') {
-		rotate(angle, Xaxis);
-	} else if (rule == '>') {
-		rotate(-angle, Xaxis);
-	} else if (rule == '^') {
-		rotate(angle, Zaxis);
-	} else if (rule == 'v') {
-		rotate(-angle, Zaxis);
-	} else if (rule == '[') {
-		s.push(currentState);
-	} else if (rule == ']') {
-		if (!s.empty()) {
-			currentState = s.top();
-			s.pop();
-		}
+	switch (rule) {
+		case 'F':
+			drawLine();
+			break;
+		case '-':
+			rotate(-angle, Zaxis);
+			break;	
+		case '+':
+			rotate(angle, Zaxis);
+			break;
+		case '<':
+			rotate(angle, Yaxis);
+			break;
+		case '>':
+			rotate(-angle, Yaxis);
+			break;
+		case '^':
+			rotate(-angle, Xaxis);
+			break;
+		case 'v':
+			rotate(angle, Xaxis);
+			break;
+		case '[':
+			s.push(currentState);
+			break;
+		case ']':
+			if (!s.empty()) {
+				currentState = s.top();
+				s.pop();
+			}	
+			break;
 	}
 }
 
@@ -598,13 +592,10 @@ Display( )
 
 	glEnable( GL_NORMALIZE );
 	currentState = {
-		glm::vec3(0., -2., 0.), // Start at the origin
-		glm::vec3(1., 0., 0.), // X-direction vector 
-		glm::vec3(0., 1., 0.), // Y-direction vector
-		glm::vec3(0., 0., 1.) // Z-direction vector
+		glm::vec3(0., -5., 0.),
+		glm::vec3(0., 1., 0.),
 	};
 
-	// Draw object here
 	// Iterate over the word and draw
 	glColor3f(1., 1., 1.);
 	for (int i = 0; i < word.length(); i++) {
