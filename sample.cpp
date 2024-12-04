@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <vector>
+#include <iostream>
+#include <unordered_map>
+#include <string>
+#include <stack>
+
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -289,8 +294,8 @@ MulArray3(float factor, float a, float b, float c )
 
 // these are here for when you need them -- just uncomment the ones you need:
 
-#include "setmaterial.cpp"
-#include "setlight.cpp"
+// #include "setmaterial.cpp"
+// #include "setlight.cpp"
 //#include "osusphere.cpp"
 //#include "osucone.cpp"
 //#include "osutorus.cpp"
@@ -298,7 +303,7 @@ MulArray3(float factor, float a, float b, float c )
 // #include "loadobjfile.cpp"
 //#include "keytime.cpp"
 // #include "glslprogram.cpp"
-#include "perlin_noise.cpp"
+// #include "perlin_noise.cpp"
 
 
 // main program:
@@ -366,16 +371,85 @@ Animate( )
 	glutPostRedisplay( );
 }
 
-void grassInstance() {
-	glBegin(GL_TRIANGLES);
-    	glVertex3f(-0.1f, 0.0f, 0.f);   // Bottom left point
-    	glVertex3f(0.f, 0.5f, 0.f);  // Top point
-    	glVertex3f(0.1f, 0.f, 0.f);   // Bottom right point
-	glEnd();	
+void print(std::string str) {
+	std::cout << str << std::endl;
 }
-// draw the complete scene:
 
+// Variables for L-System
+// std::unordered_map<char, std::string> rules = {
+// 	{'X', "F+[[X]-X]-F[-FX]+X" },
+// 	{'F', "FF"}
+// };
 
+std::unordered_map<char, std::string> rules = {
+	{'F', "FF+[+F-F-F]-[-F+F+F]"}
+};
+
+float len = 0.1;
+float angle = 25;
+std::string word = "F";
+int numIter = 4;
+
+// Recursively generate L-system word
+std::string generate() {
+	std::string newWord = "";
+	for (int i = 0; i < word.length(); i++) {
+		char c = word[i];
+		if (rules.count(c)) {
+			newWord += rules[c];
+		} else {
+			newWord += c;
+		}
+	}
+	return newWord;
+};
+
+// Define a struct to hold the x, y, z coordinates and angle
+struct State {
+    float x;
+	float y;
+	float z;   // Position coordinates
+    float angle;     // Orientation angle in degree
+};
+
+std::stack<State> s; // Declare a stack of integers
+State currentState;
+void drawLine() {
+	glPushMatrix();
+	glBegin(GL_LINES);
+		glVertex3f(currentState.x, currentState.y, currentState.z);
+		currentState.x += len * sin(currentState.angle * M_PI / 180);
+		currentState.y += len * cos(currentState.angle * M_PI / 180);
+		glVertex3f(currentState.x, currentState.y, currentState.z);
+	glEnd();
+	glPopMatrix();
+	
+}
+
+void rotateRight() {
+	currentState.angle -= angle;
+}
+void rotateLeft() {
+	currentState.angle += angle;
+}
+
+// Draw the plant according to rules
+void draw(char rule) {
+	if (rule == 'F') {
+		drawLine();
+	} else if (rule == '-') {
+		rotateLeft();
+	} else if (rule == '+') {
+		rotateRight();
+	} else if (rule == '[') {
+		s.push(currentState);
+	} else if (rule == ']') {
+		if (!s.empty()) {
+			currentState = s.top();
+			s.pop();
+		}
+	}
+}
 
 void
 Display( )
@@ -469,9 +543,16 @@ Display( )
 	// since we are using glScalef( ), be sure the normals get unitized:
 
 	glEnable( GL_NORMALIZE );
+	currentState = {0., -1., 0., 0.};
 
 	// Draw object here
-
+	// Iterate over the word and draw
+	glColor3f(1., 1., 1.);
+	for (int i = 0; i < word.length(); i++) {
+		char c = word[i];
+		draw(c);
+	}
+	
 
 
 
@@ -831,19 +912,10 @@ InitGraphics( )
 #endif
 
 	// all other setups go here, such as GLSLProgram and KeyTime setups:
-	std::vector<int> permutation = generatePermutation();
-
-	float zoff = 0.001;
-	for (int z = 0; z < cols; z++) {
-		float xoff = 0.001;
-		for (int x = 0; x < rows; x++) {
-			heightmap[x][z] = perlinNoise(xoff, zoff, permutation);
-			xoff += 0.02;
-		}
-		zoff += 0.02;
+	
+	for (int i = 0; i < numIter; i++) {
+		word = generate();
 	}
-
-
 }
 
 
