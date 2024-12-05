@@ -395,18 +395,18 @@ Animate( )
 // };
 
 // 3-D tree from Prof Baily
-std::unordered_map<char, std::string> rules = {
-	{'F', "FF+[+F-<F->F]-[-F+^F+vF]"},
-};
+// std::unordered_map<char, std::string> rules = {
+	// {'F', "FF+[+F-<F->F]-[-F+^F+vF]"},
+// };
 
 // 3-D bushes from book
-// std::unordered_map<char, std::string> rules = {
-// 	{'A', "[&FL!A]/////`[&FL!A]///////`[&FL!A]"}, // Create 3 new branches
-// 	{'F', "S ///// F"},
-// 	{'S', "FL"},
-// 	{'L', "[```^^|]"} // Leaf
-// 	// {'L', "[```^^{-f+f+f-|-f+f+f}]"} // Leaf
-// };
+std::unordered_map<char, std::string> rules = {
+	{'A', "[&FL!A]/////`[&FL!A]///////`[&FL!A]"}, // Create 3 new branches
+	{'F', "S ///// F"},
+	{'S', "FL"},
+	// {'L', "[```^^|]"} // Leaf
+	{'L', "[```^^{-f+f+f-|-f+f+f}]"} // Leaf
+};
 
 // Hilbert curve from book
 // std::unordered_map<char, std::string> rules = {
@@ -423,7 +423,8 @@ std::unordered_map<char, std::string> rules = {
 float len = 0.3;	
 float angle = 22.5;
 // std::string word = "[&F][/F][^F][\\F]";
-std::string word = "F";
+std::string word = "A";
+// std::string word = "[&F][/F][^F][\\F]";
 int numIter = 5;
 
 // Recursively generate L-system word
@@ -443,6 +444,7 @@ std::string generate() {
 struct State {
 	glm::vec3 position; 
 	glm::vec3 dir;
+	float len;
 };
 
 glm::vec3 Xaxis = {1., 0., 0.};
@@ -454,7 +456,7 @@ std::stack<State> s;
 State currentState;
 
 void drawLine() {
-	glm::vec3 endPoint = currentState.position + glm::normalize(currentState.dir) * len;
+	glm::vec3 endPoint = currentState.position + glm::normalize(currentState.dir) * currentState.len;
 
     glBegin(GL_LINES);
     	glVertex3f(currentState.position.x, currentState.position.y, currentState.position.z);  
@@ -466,7 +468,7 @@ void drawLine() {
 }
 
 void drawShorterLine() {
-	glm::vec3 endPoint = currentState.position + (glm::normalize(currentState.dir) * (0.5f * len));
+	glm::vec3 endPoint = currentState.position + (glm::normalize(currentState.dir) * (0.1f * currentState.len));
 
     glBegin(GL_LINES);
     	glVertex3f(currentState.position.x, currentState.position.y, currentState.position.z);  
@@ -490,9 +492,6 @@ void draw(char rule) {
 	switch (rule) {
 		case 'F':
 			drawLine();
-			break;
-		case 'f':
-			drawShorterLine();
 			break;
 		case '-':
 			rotate(angle, Zaxis);
@@ -531,25 +530,25 @@ void draw2(char rule) {
 			drawLine();
 			break;
 		case '-':
-			rotate(-angle, Yaxis); // Turn right
+			rotate(-angle, Zaxis); // Turn right
 			break;	
 		case '+':
-			rotate(angle, Yaxis); // Turn left
+			rotate(angle, Zaxis); // Turn left
 			break;
 		case '&':
-			rotate(-angle, Xaxis); // Pitch down
+			rotate(-angle, Yaxis); // Pitch down
 			break;
 		case '^':
-			rotate(+angle, Xaxis); // Pitch up
+			rotate(+angle, Yaxis); // Pitch up
 			break;
 		case '/':
-			rotate(-angle, Zaxis); // Roll right
+			rotate(-angle, Xaxis); // Roll right
 			break;
 		case '\\':
-			rotate(angle, Zaxis); // Roll left
+			rotate(angle, Xaxis); // Roll left
 			break;
 		case '|':
-			rotate(180, Yaxis); // Turn around
+			rotate(180, Zaxis); // Turn around
 			break;
 		case '[':
 			s.push(currentState);
@@ -560,7 +559,14 @@ void draw2(char rule) {
 				s.pop();
 			}	
 			break;
-		case 'L':
+		case 'f':
+			drawShorterLine();
+			break;
+		case '!':
+			currentState.len = 0.5f * currentState.len;
+			break;
+		case '`':
+			// currentState.len = 1.f * currentState.len;
 			break;
 		default:
 			break;
@@ -678,14 +684,15 @@ Display( )
 	glEnable( GL_NORMALIZE );
 	currentState = {
 		glm::vec3(0., 0., 0.),
-		glm::vec3(0., 1., 0.),
+		glm::vec3(1., 1., 0.),
+		len
 	};
 
 	// Iterate over the word and draw
 	glColor3f(1., 1., 1.);
 	for (int i = 0; i < word.length(); i++) {
 		char c = word[i];
-		draw(c);
+		draw2(c);
 	}
 
 
