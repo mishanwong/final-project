@@ -194,7 +194,7 @@ const int MS_PER_CYCLE = 10000;		// 10000 milliseconds = 10 seconds
 int		ActiveButton;			// current button that is down
 GLuint	AxesList;				// list to hold the axes
 int		AxesOn;					// != 0 means to draw the axes
-GLuint	BoxList;				// object display list
+GLuint	GridDL;				// object display list
 int		DebugOn;				// != 0 means to print debugging info
 int		DepthCueOn;				// != 0 means to use intensity depth cueing
 int		DepthBufferOn;			// != 0 means to use the z-buffer
@@ -251,6 +251,19 @@ float			Dot(float [3], float [3]);
 float			Unit(float [3], float [3]);
 float			Unit(float [3]);
 
+
+#define XSIDE	6.f			// length of the x side of the grid
+#define X0      (-XSIDE/2.)		// where one side starts
+#define NX	10			// how many points in x
+#define DX	( XSIDE/(float)NX )	// change in x between the points
+
+#define YGRID	0.f			// y-height of the grid
+
+#define ZSIDE	6.f			// length of the z side of the grid
+#define Z0      (-ZSIDE/2.)		// where one side starts
+#define NZ	10			// how many points in z
+#define DZ	( ZSIDE/(float)NZ )	// change in z between the points
+
 float
 Ranf( float low, float high )
 {
@@ -305,7 +318,7 @@ MulArray3(float factor, float a, float b, float c )
 
 // these are here for when you need them -- just uncomment the ones you need:
 
-// #include "setmaterial.cpp"
+#include "setmaterial.cpp"
 // #include "setlight.cpp"
 //#include "osusphere.cpp"
 //#include "osucone.cpp"
@@ -500,56 +513,6 @@ void draw(char rule) {
 	}
 }
 
-// Rules to draw 3D bushes from the book
-void draw2(char rule) {
-	switch (rule) {
-		case 'F':
-			drawLine();
-			break;
-		case '-':
-			rotate(-angle, Zaxis); // Turn right
-			break;	
-		case '+':
-			rotate(angle, Zaxis); // Turn left
-			break;
-		case '&':
-			rotate(-angle, Yaxis); // Pitch down
-			break;
-		case '^':
-			rotate(+angle, Yaxis); // Pitch up
-			break;
-		case '/':
-			rotate(-angle, Xaxis); // Roll right
-			break;
-		case '\\':
-			rotate(angle, Xaxis); // Roll left
-			break;
-		case '|':
-			rotate(180, Zaxis); // Turn around
-			break;
-		case '[':
-			s.push(currentState);
-			break;
-		case ']':
-			if (!s.empty()) {
-				currentState = s.top();
-				s.pop();
-			}	
-			break;
-		case 'f':
-			drawShorterLine();
-			break;
-		case '!':
-			currentState.len = 0.5f * currentState.len;
-			break;
-		case '`':
-			// currentState.len = 1.f * currentState.len;
-			break;
-		default:
-			break;
-	}	
-}
-
 void
 Display( )
 {
@@ -608,7 +571,7 @@ Display( )
 	glLoadIdentity( );
 
 	// set the eye position, look-at position, and up-vector:
-	glm::vec3 eye(0., 0., 3.);
+	glm::vec3 eye(0., 1., 3.);
 	glm::vec3 look(0., 0., 0.);
 	glm::vec3 up(0., 1., 0.);
 	glm::mat4 modelview = glm::lookAt(eye, look, up);
@@ -657,20 +620,26 @@ Display( )
 	}
 
 	// since we are using glScalef( ), be sure the normals get unitized:
-
 	glEnable( GL_NORMALIZE );
-	currentState = {
-		glm::vec3(0., 0., 0.),
-		glm::vec3(0., 1., 0.),
-		len
-	};
 
-	// Iterate over the word and draw
-	glColor3f(1., 1., 1.);
-	for (int i = 0; i < word.length(); i++) {
-		char c = word[i];
-		draw2(c);
-	}
+	glColor3f(0.67, 0.4, 0.23);
+	glTranslatef(0., -0.5, 0.);
+	glCallList(GridDL);
+	
+	
+	// // L-System related code
+	// currentState = {
+	// 	glm::vec3(0., 0., 0.),
+	// 	glm::vec3(0., 1., 0.),
+	// 	len
+	// };
+
+	// // Iterate over the word and draw
+	// glColor3f(1., 1., 1.);
+	// for (int i = 0; i < word.length(); i++) {
+	// 	char c = word[i];
+	// 	draw(c);
+	// }
 
 
 
@@ -1031,10 +1000,10 @@ InitGraphics( )
 
 	// all other setups go here, such as GLSLProgram and KeyTime setups:
 	
-	for (int i = 0; i < numIter; i++) {
-		word = generate();
-	}
-	std::cout << "Word: " << word << std::endl;
+	// for (int i = 0; i < numIter; i++) {
+	// 	word = generate();
+	// }
+	// std::cout << "Word: " << word << std::endl;
 }
 
 
@@ -1053,6 +1022,23 @@ InitLists( )
 
 	// create the object:
 
+	// create the grid
+	GridDL = glGenLists(1);
+	glNewList(GridDL, GL_COMPILE);
+	SetMaterial( 0.6f, 0.6f, 0.6f, 30.f );		
+        glNormal3f( 0., 1., 0. );
+        for( int i = 0; i < NZ; i++ )
+        {
+                glBegin( GL_QUAD_STRIP );
+                for( int j = 0; j < NX; j++ )
+                {
+                        glVertex3f( X0 + DX*(float)j, YGRID, Z0 + DZ*(float)(i+0) );
+                        glVertex3f( X0 + DX*(float)j, YGRID, Z0 + DZ*(float)(i+1) );
+                }
+                glEnd( );
+        }
+	glEndList( );
+
 	// create the axes:
 
 	AxesList = glGenLists( 1 );
@@ -1061,6 +1047,9 @@ InitLists( )
 			Axes( 1.5 );
 		glLineWidth( 1. );
 	glEndList( );
+
+
+
 }
 
 
