@@ -395,36 +395,13 @@ Animate( )
 // };
 
 // 3-D tree from Prof Baily
-// std::unordered_map<char, std::string> rules = {
-	// {'F', "FF+[+F-<F->F]-[-F+^F+vF]"},
-// };
-
-// 3-D bushes from book
 std::unordered_map<char, std::string> rules = {
-	{'A', "[&FL!A]/////`[&FL!A]///////`[&FL!A]"}, // Create 3 new branches
-	{'F', "S ///// F"},
-	{'S', "FL"},
-	// {'L', "[```^^|]"} // Leaf
-	{'L', "[```^^{-f+f+f-|-f+f+f}]"} // Leaf
+	{'F', "FF+[+F-<F->F]-[-F+^F+vF]"},
 };
 
-// Hilbert curve from book
-// std::unordered_map<char, std::string> rules = {
-// 	{'A', "B-F+CFC+F-D&F^D-F+&&CFC+F+B//"}, 
-// 	{'B', "A&F^CFB^F^D^^-F-D^|F^B|FC^F^A//"},
-// 	{'C', "|D^|F^B-F+C^F^A&&FA&F^C+F+B^F^D//"},
-// 	{'D', "|CFB-F+B|FA&F^A&&FB-F+B|FC//"} 
-// };
-
-// Hilbert curve from here https://jsantell.com/l-systems/
-// std::unordered_map<char, std::string> rules = {
-// 	{'X', "^///XF^///XFX-F^//XFX&F+//XFX-F/X-/"}
-// };
 float len = 0.3;	
 float angle = 22.5;
-// std::string word = "[&F][/F][^F][\\F]";
-std::string word = "A";
-// std::string word = "[&F][/F][^F][\\F]";
+std::string word = "F";
 int numIter = 5;
 
 // Recursively generate L-system word
@@ -494,16 +471,16 @@ void draw(char rule) {
 			drawLine();
 			break;
 		case '-':
-			rotate(angle, Zaxis);
+			rotate(-angle, Zaxis);
 			break;	
 		case '+':
-			rotate(-angle, Zaxis);
+			rotate(+angle, Zaxis);
 			break;
 		case '<':
-			rotate(-angle, Yaxis);
+			rotate(+angle, Yaxis);
 			break;
 		case '>':
-			rotate(angle, Yaxis);
+			rotate(-angle, Yaxis);
 			break;
 		case '^':
 			rotate(angle, Xaxis);
@@ -684,7 +661,7 @@ Display( )
 	glEnable( GL_NORMALIZE );
 	currentState = {
 		glm::vec3(0., 0., 0.),
-		glm::vec3(1., 1., 0.),
+		glm::vec3(0., 1., 0.),
 		len
 	};
 
