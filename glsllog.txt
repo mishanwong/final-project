@@ -1,0 +1,12 @@
+
+ERROR: 0:7: '*' does not operate on 'int' and 'float'
+ERROR: 0:11: Use of undeclared identifier 'gl_InstanceID'
+ERROR: 0:12: Use of undeclared identifier 'gl_InstanceID'
+ERROR: 0:14: Use of undeclared identifier 'ix'
+ERROR: 0:15: Use of undeclared identifier 'iy'
+ERROR: 0:17: Use of undeclared identifier 'x'
+ERROR: 0:17: Use of undeclared identifier 'y'
+ERROR: 0:17: Use of undeclared identifier 'glVertex'
+ERROR: 0:19: Use of undeclared identifier 'gl_Position'
+ERROR: 0:19: Use of undeclared identifier 'vert'
+

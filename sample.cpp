@@ -251,7 +251,7 @@ float			Dot(float [3], float [3]);
 float			Unit(float [3], float [3]);
 float			Unit(float [3]);
 
-
+// Constants for the grid
 #define XSIDE	6.f			// length of the x side of the grid
 #define X0      (-XSIDE/2.)		// where one side starts
 #define NX	10			// how many points in x
@@ -263,6 +263,16 @@ float			Unit(float [3]);
 #define Z0      (-ZSIDE/2.)		// where one side starts
 #define NZ	10			// how many points in z
 #define DZ	( ZSIDE/(float)NZ )	// change in z between the points
+
+// Constants for grass
+#define NUMX 100
+#define NUMY 100
+#define XMIN (-XSIDE / 2.)
+#define XMAX (XSIDE / 2.)
+#define YMIN -0.5
+#define YMAX 0.5
+#define PERIODX 1
+#define PERIODY 2
 
 float
 Ranf( float low, float high )
@@ -326,9 +336,12 @@ MulArray3(float factor, float a, float b, float c )
 //#include "bmptotexture.cpp"
 // #include "loadobjfile.cpp"
 //#include "keytime.cpp"
-// #include "glslprogram.cpp"
+#include "glslprogram.cpp"
 // #include "perlin_noise.cpp"
+// #include "vertexbufferobject.cpp"
 
+
+GLSLProgram Grass;
 
 // main program:
 
@@ -640,6 +653,14 @@ Display( )
 	// 	char c = word[i];
 	// 	draw(c);
 	// }
+
+	// Turn on grass shader
+	Grass.Use();
+	Grass.SetUniformVariable("uTime", Time);
+	// Draw the grass field
+	Grass.UnUse();
+
+
 
 
 
@@ -1004,6 +1025,29 @@ InitGraphics( )
 	// 	word = generate();
 	// }
 	// std::cout << "Word: " << word << std::endl;
+
+	// Set up Grass shaders
+	Grass.Init();
+	bool valid = Grass.Create("grass.vert", "grass.frag");
+	if (!valid) {
+		fprintf(stderr, "Shaders cannot be created\n");
+	} else {
+		fprintf(stderr, "Shaders created.\n");
+	}
+
+	Grass.Use();
+	Grass.SetUniformVariable( "uNumx", NUMX);
+	Grass.SetUniformVariable( "uNumy", NUMY);
+	Grass.SetUniformVariable( "uXmin", XMIN);
+	Grass.SetUniformVariable( "uXmax", XMAX);
+	Grass.SetUniformVariable( "uYmin", YMIN);
+	Grass.SetUniformVariable( "uYmax", YMAX);
+	Grass.SetUniformVariable( "uPeriodx", PERIODX);
+	Grass.SetUniformVariable( "uPeriody", PERIODY);
+	Grass.UnUse();
+
+	// Draw a grass blade
+
 }
 
 
