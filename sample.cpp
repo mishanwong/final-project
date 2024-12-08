@@ -6,8 +6,6 @@
 #include <unordered_map>
 #include <string>
 #include <stack>
-#include <unistd.h> // Required for sleep (POSIX only)
-
 
 #define GLM_FORCE_RADIANS
 #include "glm/vec2.hpp"
@@ -217,7 +215,6 @@ const int cols = W * 2 / scale;
 const int rows = H * 2/ scale;
 float heightmap[rows][cols];
 
-
 // function prototypes:
 
 void	Animate( );
@@ -265,14 +262,14 @@ float			Unit(float [3]);
 #define DZ	( ZSIDE/(float)NZ )	// change in z between the points
 
 // Constants for grass
-#define NUMX 100
-#define NUMY 100
-#define XMIN (-XSIDE / 2.)
-#define XMAX (XSIDE / 2.)
-#define YMIN -0.5
-#define YMAX 0.5
-#define PERIODX 1
-#define PERIODY 2
+// #define NUMX 100
+// #define NUMY 100
+// #define XMIN (-XSIDE / 2.)
+// #define XMAX (XSIDE / 2.)
+// #define YMIN -0.5
+// #define YMAX 0.5
+// #define PERIODX 1
+// #define PERIODY 2
 
 float
 Ranf( float low, float high )
@@ -336,12 +333,53 @@ MulArray3(float factor, float a, float b, float c )
 //#include "bmptotexture.cpp"
 // #include "loadobjfile.cpp"
 //#include "keytime.cpp"
-#include "glslprogram.cpp"
+// #include "glslprogram.cpp"
 // #include "perlin_noise.cpp"
 // #include "vertexbufferobject.cpp"
+#include "lsystem.cpp"
 
 
-GLSLProgram Grass;
+// Initialize plants
+// LSystem lsystem1, lsystem2, lsystem3;
+// Plant plant1, plant2, plant3;
+// State state1, state2, state3;
+
+	std::vector<Plant> plants = {
+		// Tree 1: 3D Tree from Prof Bailey
+		{
+			"F",
+			4,
+			22.5,
+			{
+				glm::vec3(-1., 0., -1.),
+				glm::vec3(0., 1., 0.),
+				0.05
+			},
+			{
+				{'F', "FF+[+F-<F->F]-[-F+^F+vF]"}
+			}
+		},
+		// Tree 2:
+		{
+			"X",
+			5,
+			22.5,
+			{
+				glm::vec3(1., 0., -1.),
+				glm::vec3(0., 1., 0.),
+				0.01
+			},
+			{
+				{'X', "F+[[X]-X]-F[-FX]+X" },
+				{'F', "FF"}
+			}	
+		}
+	};
+// LSystem lsystem1(plants[0]);
+std::vector<LSystem> lsystems;
+
+// Plant plant1;
+// State state1;
 
 // main program:
 
@@ -406,124 +444,6 @@ Animate( )
 
 	glutSetWindow( MainWindow );
 	glutPostRedisplay( );
-}
-
-
-// Variables for L-System
-// std::unordered_map<char, std::string> rules = {
-// 	{'X', "F+[[X]-X]-F[-FX]+X" },
-// 	{'F', "FF"}
-// };
-
-//2-D tree from Prof Bailey
-// std::unordered_map<char, std::string> rules = {
-// 	{'F', "FF+[+F-F-F]-[-F+F+F]"}
-// };
-
-// 3-D tree from Prof Baily
-std::unordered_map<char, std::string> rules = {
-	{'F', "FF+[+F-<F->F]-[-F+^F+vF]"},
-};
-
-float len = 0.3;	
-float angle = 22.5;
-std::string word = "F";
-int numIter = 5;
-
-// Recursively generate L-system word
-std::string generate() {
-	std::string newWord = "";
-	for (int i = 0; i < word.length(); i++) {
-		char c = word[i];
-		if (rules.count(c)) {
-			newWord += rules[c];
-		} else {
-			newWord += c;
-		}
-	}
-	return newWord;
-};
-
-struct State {
-	glm::vec3 position; 
-	glm::vec3 dir;
-	float len;
-};
-
-glm::vec3 Xaxis = {1., 0., 0.};
-glm::vec3 Yaxis = {0., 1., 0.};
-glm::vec3 Zaxis = {0., 0., 1.};
-
-std::stack<State> s; 
-
-State currentState;
-
-void drawLine() {
-	glm::vec3 endPoint = currentState.position + glm::normalize(currentState.dir) * currentState.len;
-
-    glBegin(GL_LINES);
-    	glVertex3f(currentState.position.x, currentState.position.y, currentState.position.z);  
-    	glVertex3f(endPoint.x, endPoint.y, endPoint.z);  
-    glEnd();
-
-	currentState.position = endPoint;
-	
-}
-
-void drawShorterLine() {
-	glm::vec3 endPoint = currentState.position + (glm::normalize(currentState.dir) * (0.1f * currentState.len));
-
-    glBegin(GL_LINES);
-    	glVertex3f(currentState.position.x, currentState.position.y, currentState.position.z);  
-    	glVertex3f(endPoint.x, endPoint.y, endPoint.z);  
-    glEnd();
-
-	currentState.position = endPoint;
-
-}
-
-void rotate(float angle, glm::vec3 axis) {
-	glm::mat4 identity = glm::mat4(1.0f);
-	glm::mat4 rotationMatrix = glm::rotate(identity, glm::radians(angle), axis);
-
-	currentState.dir = glm::vec3(rotationMatrix * glm::vec4(currentState.dir, 0.0f));
-
-}
-
-// Draw the plant according to rules
-void draw(char rule) {
-	switch (rule) {
-		case 'F':
-			drawLine();
-			break;
-		case '-':
-			rotate(-angle, Zaxis);
-			break;	
-		case '+':
-			rotate(+angle, Zaxis);
-			break;
-		case '<':
-			rotate(+angle, Yaxis);
-			break;
-		case '>':
-			rotate(-angle, Yaxis);
-			break;
-		case '^':
-			rotate(angle, Xaxis);
-			break;
-		case 'v':
-			rotate(-angle, Xaxis);
-			break;
-		case '[':
-			s.push(currentState);
-			break;
-		case ']':
-			if (!s.empty()) {
-				currentState = s.top();
-				s.pop();
-			}	
-			break;
-	}
 }
 
 void
@@ -639,30 +559,12 @@ Display( )
 	glTranslatef(0., -0.5, 0.);
 	glCallList(GridDL);
 	
+	// Draw the first tree
+	glColor3f(1., 1., 1.);
+	for (int i = 0; i < lsystems.size(); i++) {
+		lsystems[i].drawPlant();
+	}
 	
-	// // L-System related code
-	// currentState = {
-	// 	glm::vec3(0., 0., 0.),
-	// 	glm::vec3(0., 1., 0.),
-	// 	len
-	// };
-
-	// // Iterate over the word and draw
-	// glColor3f(1., 1., 1.);
-	// for (int i = 0; i < word.length(); i++) {
-	// 	char c = word[i];
-	// 	draw(c);
-	// }
-
-	// Turn on grass shader
-	Grass.Use();
-	Grass.SetUniformVariable("uTime", Time);
-	// Draw the grass field
-	Grass.UnUse();
-
-
-
-
 
 
 #ifdef DEMO_Z_FIGHTING
@@ -1021,33 +923,13 @@ InitGraphics( )
 
 	// all other setups go here, such as GLSLProgram and KeyTime setups:
 	
-	// for (int i = 0; i < numIter; i++) {
-	// 	word = generate();
-	// }
-	// std::cout << "Word: " << word << std::endl;
+	for (int i = 0; i < plants.size(); i++) {
+		lsystems.push_back(plants[i]);
+	};
 
-	// Set up Grass shaders
-	Grass.Init();
-	bool valid = Grass.Create("grass.vert", "grass.frag");
-	if (!valid) {
-		fprintf(stderr, "Shaders cannot be created\n");
-	} else {
-		fprintf(stderr, "Shaders created.\n");
+	for (int i = 0; i < lsystems.size(); i++) {
+		lsystems[i].generate();
 	}
-
-	Grass.Use();
-	Grass.SetUniformVariable( "uNumx", NUMX);
-	Grass.SetUniformVariable( "uNumy", NUMY);
-	Grass.SetUniformVariable( "uXmin", XMIN);
-	Grass.SetUniformVariable( "uXmax", XMAX);
-	Grass.SetUniformVariable( "uYmin", YMIN);
-	Grass.SetUniformVariable( "uYmax", YMAX);
-	Grass.SetUniformVariable( "uPeriodx", PERIODX);
-	Grass.SetUniformVariable( "uPeriody", PERIODY);
-	Grass.UnUse();
-
-	// Draw a grass blade
-
 }
 
 

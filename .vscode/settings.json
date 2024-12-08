@@ -71,6 +71,7 @@
     "type_traits": "cpp",
     "utility": "cpp",
     "cinttypes": "cpp",
-    "iostream": "cpp"
+    "iostream": "cpp",
+    "*.inc": "cpp"
   }
 }
