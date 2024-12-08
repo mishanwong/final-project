@@ -341,34 +341,100 @@ MulArray3(float factor, float a, float b, float c )
 
 
 std::vector<Plant> plants = {
-	// Tree 1: 3D Tree from Prof Bailey
+	// Tree 1 (c)
 	{
 		"F",
 		4,
 		22.5,
 		{
-			glm::vec3(Ranf(-2.5,2.5), 0., Ranf(-2.5, 2.5)),
+			glm::vec3(Ranf(-2.5,2.5), 0., Ranf(-2.5, 1.5)),
 			glm::vec3(0., 1., 0.),
 			0.05
 		},
 		{
 			{'F', "FF+[+F-<F->F]-[-F+^F+vF]"}
-		}
+		},
+		glm::vec3(0.72, 0.42, 0.02)
+		// {0.72, 0.42, 0.02}
 	},
-	// Tree 2:
+	// Tree 2 (f):
 	{
 		"X",
 		6,
 		22.5,
 		{
-			glm::vec3(Ranf(-2.5, 2.5), 0., Ranf(-2.5, 2.5)),
+			glm::vec3(Ranf(-2.5, 2.5), 0., Ranf(-2.5, 1.5)),
 			glm::vec3(0., 1., 0.),
 			0.01
 		},
 		{
 			{'X', "F+[[X]-X]-F[-FX]+X" },
 			{'F', "FF"}
-		}	
+		},
+		glm::vec3(0.07, 0.32, 0.13)
+		// {0.07, 0.32, 0.13}
+	},
+	// Tree 3 (d):
+	{
+		"X",
+		7,
+		20.f,
+		{
+			glm::vec3(Ranf(-2.5, 2.5), 0, Ranf(-2.5, 1.5)),
+			glm::vec3(0., 1., 0),
+			0.01
+		},
+		{
+			{'X', "F[+X]F[-X]+X"},
+			{'F', "FF"}
+		},
+		glm::vec3(0.97, 0.45, 0.81)
+	},
+	// Tree 4 (a):
+	{
+		"F",
+		5,
+		25.7,
+		{
+			glm::vec3(Ranf(-2.5, 2.5), 0, Ranf(-2.5, 1.5)),
+			glm::vec3(0., 1., 0),
+			0.01
+		},
+		{
+			{'F', "F[+F]F[-F]F"}
+		},
+		glm::vec3(0.83, 0.52, 0.96)
+	},
+	//Tree 5(b)
+	{
+		"F",
+		5,
+		20.f,
+		{
+			glm::vec3(Ranf(-2.5, 2.5), 0, Ranf(-2.5, 2.5)),
+			glm::vec3(0., 1., 0),
+			0.02
+		},
+		{
+			{'F', "F[+F]F[-F][F]"}
+		},
+		glm::vec3(0.16, 0.69, 0.52)
+	},
+	// Tree 6 (e)
+	{
+		"X",
+		5,
+		20.f,
+		{
+			glm::vec3(Ranf(-2.5, 2.5), 0, Ranf(-2.5, 2.5)),
+			glm::vec3(0., 1., 0),
+			0.03
+		},
+		{
+			{'X', "F[+X][-X]FX"},
+			{'F', "FF"}
+		},
+		glm::vec3(0.89, 0.49, 0.22)
 	}
 };
 std::vector<LSystem> lsystems;
@@ -1141,7 +1207,7 @@ void
 Reset( )
 {
 	ActiveButton = 0;
-	AxesOn = 1;
+	AxesOn = 0;
 	DebugOn = 0;
 	DepthBufferOn = 1;
 	DepthFightingOn = 0;

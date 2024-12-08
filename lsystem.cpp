@@ -113,12 +113,11 @@ class LSystem {
     }
 
 	void drawLeaf() {
-		SetMaterial(0., 1., 0., 10);
+		SetMaterial(plant.color.r, plant.color.g, plant.color.b, 10);
 		glPushMatrix();
 			glTranslatef(state.position.x, state.position.y, state.position.z);
 			glCallList(ConeDL);
 		glPopMatrix();
-		SetMaterial(1., 1., 1., 10);
 	}
 
     void drawPlant() {

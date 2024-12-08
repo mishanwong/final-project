@@ -17,5 +17,6 @@ struct Plant {
 	float angle; // in degree
 	State initialState;
 	std::unordered_map<char, std::string> rules;
-    std::stack<State> s;  
+	glm::vec3 color;  
+    std::stack<State> s;
 };
