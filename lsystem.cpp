@@ -7,6 +7,7 @@
 #include "plant.h"
 #include <OpenGL/gl.h>
 #include "osusphere.cpp"
+#include "osucone.cpp"
 #include "setmaterial.cpp"
 
 
@@ -57,8 +58,12 @@ class LSystem {
 	}
     void drawLine() {
     	glm::vec3 endPoint = state.position + glm::normalize(state.dir) * state.len;
+		glm::vec3 directionVec = endPoint - state.position;
+		float magnitude = glm::length(directionVec);
+		glm::vec3 translation = glm::normalize(state.dir) * state.len;
 
         glBegin(GL_LINES);
+			glColor3f(1., 1., 1.);
         	glVertex3f(state.position.x, state.position.y, state.position.z);  
         	glVertex3f(endPoint.x, endPoint.y, endPoint.z);  
         glEnd();
@@ -114,6 +119,7 @@ class LSystem {
 
 	void drawLeaf() {
 		SetMaterial(plant.color.r, plant.color.g, plant.color.b, 10);
+		glColor3f(plant.color.r, plant.color.g, plant.color.b);
 		glPushMatrix();
 			glTranslatef(state.position.x, state.position.y, state.position.z);
 			glCallList(ConeDL);

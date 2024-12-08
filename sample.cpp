@@ -329,7 +329,7 @@ MulArray3(float factor, float a, float b, float c )
 // #include "setmaterial.cpp"
 // #include "setlight.cpp"
 // #include "osusphere.cpp"
-#include "osucone.cpp"
+// #include "osucone.cpp"
 //#include "osutorus.cpp"
 //#include "bmptotexture.cpp"
 // #include "loadobjfile.cpp"
@@ -341,7 +341,7 @@ MulArray3(float factor, float a, float b, float c )
 
 
 std::vector<Plant> plants = {
-	// Tree 1 (c)
+	// Tree 1 (c) - 3D
 	{
 		"F",
 		4,
@@ -363,16 +363,21 @@ std::vector<Plant> plants = {
 		6,
 		22.5,
 		{
-			glm::vec3(Ranf(-2.5, 2.5), 0., Ranf(-2.5, 1.5)),
+			glm::vec3(0, 0., 0),
 			glm::vec3(0., 1., 0.),
-			0.01
+			0.05
 		},
+		// Original rules:
+		// {
+		// 	{'X', "F+[[X]-X]-F[-FX]+X" },
+		// 	{'F', "FF"}
+
+		// }
 		{
 			{'X', "F+[[X]-X]-F[-FX]+X" },
 			{'F', "FF"}
 		},
 		glm::vec3(0.07, 0.32, 0.13)
-		// {0.07, 0.32, 0.13}
 	},
 	// Tree 3 (d):
 	{
@@ -420,18 +425,19 @@ std::vector<Plant> plants = {
 		},
 		glm::vec3(0.16, 0.69, 0.52)
 	},
-	// Tree 6 (e)
+	// Tree 6 (e)- include this
 	{
 		"X",
 		5,
 		20.f,
 		{
-			glm::vec3(Ranf(-2.5, 2.5), 0, Ranf(-2.5, 2.5)),
+			glm::vec3(0, 0, 0),
 			glm::vec3(0., 1., 0),
 			0.03
 		},
 		{
-			{'X', "F[+X][-X]FX"},
+			// {'X', "F[+X][-X]FX"}, // Original rule
+			{'X', "F[+X][<<<<X][>>>>X][-X][<<<<X][>>>>X]FX"},
 			{'F', "FF"}
 		},
 		glm::vec3(0.89, 0.49, 0.22)
@@ -622,8 +628,8 @@ Display( )
 
 	// since we are using glScalef( ), be sure the normals get unitized:
 	glEnable( GL_NORMALIZE );
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
+	// glEnable(GL_LIGHTING);
+	// glEnable(GL_LIGHT0);
 
 	// glColor3f(0.67, 0.4, 0.23);
 	glTranslatef(0., -0.5, 0.);
@@ -994,7 +1000,8 @@ InitGraphics( )
 	// all other setups go here, such as GLSLProgram and KeyTime setups:
 	
 	for (int i = 0; i < plants.size(); i++) {
-		lsystems.push_back(plants[i]);
+		if (i == 5)
+			lsystems.push_back(plants[i]);
 	};
 	for (int i = 0; i < lsystems.size(); i++) {
 		lsystems[i].generate(9);
@@ -1023,6 +1030,7 @@ InitLists( )
 	GridDL = glGenLists(1);
 	glNewList(GridDL, GL_COMPILE);
 	SetMaterial( 0.67f, 0.4f, 0.23f, 30.f );		
+	glColor3f(0.67, 0.4, 0.23);
         glNormal3f( 0., 1., 0. );
         for( int i = 0; i < NZ; i++ )
         {
@@ -1044,15 +1052,6 @@ InitLists( )
 			Axes( 1.5 );
 		glLineWidth( 1. );
 	glEndList( );
-
-	// Create a cone
-	// ConeDL = glGenLists(1);
-	// glNewList(ConeDL, GL_COMPILE);
-		// OsuCone(0.02, 0., 0.1, 20, 20);
-		// OsuSphere(0.5, 20, 20);
-	// glEndList();
-	
-	// std::cout << "Sample: " << ConeDL << std::endl;
 }
 
 
