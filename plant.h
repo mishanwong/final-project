@@ -18,5 +18,6 @@ struct Plant {
 	State initialState;
 	std::unordered_map<char, std::string> rules;
 	glm::vec3 color;  
+	float sphereRadius;
     std::stack<State> s;
 };

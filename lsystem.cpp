@@ -15,7 +15,7 @@ class LSystem {
     Plant plant;
 	State state;
 	std::string word;
-	GLuint ConeDL;
+	GLuint SphereDL;
 
     glm::vec3 Xaxis = {1., 0., 0.};
     glm::vec3 Yaxis = {0., 1., 0.};
@@ -23,13 +23,13 @@ class LSystem {
 
     public:
     LSystem(Plant plant) : plant(plant), state(plant.initialState), word(plant.initialWord) {
-		setConeDL();
+		setSphereDL();
 	}
     
-	void setConeDL() {
-		ConeDL = glGenLists(1);
-		glNewList(ConeDL, GL_COMPILE);
-			OsuSphere(0.01, 20, 20);
+	void setSphereDL() {
+		SphereDL = glGenLists(1);
+		glNewList(SphereDL, GL_COMPILE);
+			OsuSphere(plant.sphereRadius, 20, 20);
 		glEndList();
 	}
 	void resetWord() {
@@ -58,12 +58,9 @@ class LSystem {
 	}
     void drawLine() {
     	glm::vec3 endPoint = state.position + glm::normalize(state.dir) * state.len;
-		glm::vec3 directionVec = endPoint - state.position;
-		float magnitude = glm::length(directionVec);
-		glm::vec3 translation = glm::normalize(state.dir) * state.len;
 
         glBegin(GL_LINES);
-			glColor3f(1., 1., 1.);
+			glColor3f(0.8, 0.33, 0.10); // Line color
         	glVertex3f(state.position.x, state.position.y, state.position.z);  
         	glVertex3f(endPoint.x, endPoint.y, endPoint.z);  
         glEnd();
@@ -118,12 +115,15 @@ class LSystem {
     }
 
 	void drawLeaf() {
+		glEnable(GL_LIGHTING);
+		glEnable(GL_LIGHT0);
 		SetMaterial(plant.color.r, plant.color.g, plant.color.b, 10);
 		glColor3f(plant.color.r, plant.color.g, plant.color.b);
 		glPushMatrix();
 			glTranslatef(state.position.x, state.position.y, state.position.z);
-			glCallList(ConeDL);
+			glCallList(SphereDL);
 		glPopMatrix();
+		glDisable(GL_LIGHTING);
 	}
 
     void drawPlant() {
