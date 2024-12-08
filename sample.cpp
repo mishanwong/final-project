@@ -326,10 +326,10 @@ MulArray3(float factor, float a, float b, float c )
 
 // these are here for when you need them -- just uncomment the ones you need:
 
-#include "setmaterial.cpp"
+// #include "setmaterial.cpp"
 // #include "setlight.cpp"
-//#include "osusphere.cpp"
-//#include "osucone.cpp"
+// #include "osusphere.cpp"
+#include "osucone.cpp"
 //#include "osutorus.cpp"
 //#include "bmptotexture.cpp"
 // #include "loadobjfile.cpp"
@@ -556,19 +556,19 @@ Display( )
 
 	// since we are using glScalef( ), be sure the normals get unitized:
 	glEnable( GL_NORMALIZE );
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
 
-	glColor3f(0.67, 0.4, 0.23);
+	// glColor3f(0.67, 0.4, 0.23);
 	glTranslatef(0., -0.5, 0.);
 	glCallList(GridDL);
 	
 	// Draw L-System trees
-	glColor3f(1., 1., 1.);
-
-	
 	for (int i = 0; i < lsystems.size(); i++) {
 		lsystems[i].drawPlant();
 	}
 	
+	glDisable(GL_LIGHTING);
 
 
 #ifdef DEMO_Z_FIGHTING
@@ -930,10 +930,9 @@ InitGraphics( )
 	for (int i = 0; i < plants.size(); i++) {
 		lsystems.push_back(plants[i]);
 	};
-	// lsystems.push_back(plants[1]);
-	// lsystems[1].generate(5);
 	for (int i = 0; i < lsystems.size(); i++) {
 		lsystems[i].generate(9);
+
 	}
 
 }
@@ -957,7 +956,7 @@ InitLists( )
 	// create the grid
 	GridDL = glGenLists(1);
 	glNewList(GridDL, GL_COMPILE);
-	SetMaterial( 0.6f, 0.6f, 0.6f, 30.f );		
+	SetMaterial( 0.67f, 0.4f, 0.23f, 30.f );		
         glNormal3f( 0., 1., 0. );
         for( int i = 0; i < NZ; i++ )
         {
@@ -980,8 +979,14 @@ InitLists( )
 		glLineWidth( 1. );
 	glEndList( );
 
-
-
+	// Create a cone
+	// ConeDL = glGenLists(1);
+	// glNewList(ConeDL, GL_COMPILE);
+		// OsuCone(0.02, 0., 0.1, 20, 20);
+		// OsuSphere(0.5, 20, 20);
+	// glEndList();
+	
+	// std::cout << "Sample: " << ConeDL << std::endl;
 }
 
 

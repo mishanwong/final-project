@@ -6,20 +6,31 @@
 #include <stack>          
 #include "plant.h"
 #include <OpenGL/gl.h>
+#include "osusphere.cpp"
+#include "setmaterial.cpp"
 
 
 class LSystem {
     Plant plant;
 	State state;
 	std::string word;
+	GLuint ConeDL;
 
     glm::vec3 Xaxis = {1., 0., 0.};
     glm::vec3 Yaxis = {0., 1., 0.};
     glm::vec3 Zaxis = {0., 0., 1.};
 
     public:
-    LSystem(Plant plant) : plant(plant), state(plant.initialState), word(plant.initialWord) {}
+    LSystem(Plant plant) : plant(plant), state(plant.initialState), word(plant.initialWord) {
+		setConeDL();
+	}
     
+	void setConeDL() {
+		ConeDL = glGenLists(1);
+		glNewList(ConeDL, GL_COMPILE);
+			OsuSphere(0.01, 20, 20);
+		glEndList();
+	}
 	void resetWord() {
 		word = plant.initialWord;
 	}
@@ -36,7 +47,6 @@ class LSystem {
 	    			newWord += c;
 	    		}
 	    	}
-        // plant.numIterIter -= 1;ss
 		word = newWord;
 		generate(numIter - 1);
     }; 
@@ -93,6 +103,7 @@ class LSystem {
     			plant.s.push(state);
     			break;
     		case ']':
+				drawLeaf();
     			if (!plant.s.empty()) {
     				state = plant.s.top();
     				plant.s.pop();
@@ -100,6 +111,15 @@ class LSystem {
     			break;
     	}
     }
+
+	void drawLeaf() {
+		SetMaterial(0., 1., 0., 10);
+		glPushMatrix();
+			glTranslatef(state.position.x, state.position.y, state.position.z);
+			glCallList(ConeDL);
+		glPopMatrix();
+		SetMaterial(1., 1., 1., 10);
+	}
 
     void drawPlant() {
     	for (int i = 0; i < word.length(); i++) {
