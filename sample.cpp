@@ -199,6 +199,7 @@ int		DepthBufferOn;			// != 0 means to use the z-buffer
 int		DepthFightingOn;		// != 0 means to force the creation of z-fighting
 int		MainWindow;				// window id for main graphics window
 int		NowColor;				// index into Colors[ ]
+int 	NowIter;			// Current iteration of L-System plants
 int		NowProjection;		// ORTHO or PERSP
 float	Scale;					// scaling factor
 int		ShadowsOn;				// != 0 means to turn shadows on
@@ -339,48 +340,49 @@ MulArray3(float factor, float a, float b, float c )
 #include "lsystem.cpp"
 
 
-// Initialize plants
-// LSystem lsystem1, lsystem2, lsystem3;
-// Plant plant1, plant2, plant3;
-// State state1, state2, state3;
-
-	std::vector<Plant> plants = {
-		// Tree 1: 3D Tree from Prof Bailey
+std::vector<Plant> plants = {
+	// Tree 1: 3D Tree from Prof Bailey
+	{
+		"F",
+		4,
+		22.5,
 		{
-			"F",
-			4,
-			22.5,
-			{
-				glm::vec3(-1., 0., -1.),
-				glm::vec3(0., 1., 0.),
-				0.05
-			},
-			{
-				{'F', "FF+[+F-<F->F]-[-F+^F+vF]"}
-			}
+			glm::vec3(Ranf(-2.5,2.5), 0., Ranf(-2.5, 2.5)),
+			glm::vec3(0., 1., 0.),
+			0.05
 		},
-		// Tree 2:
 		{
-			"X",
-			5,
-			22.5,
-			{
-				glm::vec3(1., 0., -1.),
-				glm::vec3(0., 1., 0.),
-				0.01
-			},
-			{
-				{'X', "F+[[X]-X]-F[-FX]+X" },
-				{'F', "FF"}
-			}	
+			{'F', "FF+[+F-<F->F]-[-F+^F+vF]"}
 		}
-	};
-// LSystem lsystem1(plants[0]);
+	},
+	// Tree 2:
+	{
+		"X",
+		6,
+		22.5,
+		{
+			glm::vec3(Ranf(-2.5, 2.5), 0., Ranf(-2.5, 2.5)),
+			glm::vec3(0., 1., 0.),
+			0.01
+		},
+		{
+			{'X', "F+[[X]-X]-F[-FX]+X" },
+			{'F', "FF"}
+		}	
+	}
+};
 std::vector<LSystem> lsystems;
 
-// Plant plant1;
-// State state1;
+void regenerate() {
+	for (int i = 0; i < lsystems.size(); i++) {
+		LSystem currentTree = lsystems[i];
+		if (NowIter <= currentTree.getMaxIter()) {
+			lsystems[i].resetWord();
+			lsystems[i].generate(NowIter);
 
+		}
+	}
+}
 // main program:
 
 int
@@ -504,7 +506,7 @@ Display( )
 	glLoadIdentity( );
 
 	// set the eye position, look-at position, and up-vector:
-	glm::vec3 eye(0., 1., 3.);
+	glm::vec3 eye(0., 1., 5.);
 	glm::vec3 look(0., 0., 0.);
 	glm::vec3 up(0., 1., 0.);
 	glm::mat4 modelview = glm::lookAt(eye, look, up);
@@ -559,8 +561,10 @@ Display( )
 	glTranslatef(0., -0.5, 0.);
 	glCallList(GridDL);
 	
-	// Draw the first tree
+	// Draw L-System trees
 	glColor3f(1., 1., 1.);
+
+	
 	for (int i = 0; i < lsystems.size(); i++) {
 		lsystems[i].drawPlant();
 	}
@@ -926,10 +930,12 @@ InitGraphics( )
 	for (int i = 0; i < plants.size(); i++) {
 		lsystems.push_back(plants[i]);
 	};
-
+	// lsystems.push_back(plants[1]);
+	// lsystems[1].generate(5);
 	for (int i = 0; i < lsystems.size(); i++) {
-		lsystems[i].generate();
+		lsystems[i].generate(9);
 	}
+
 }
 
 
@@ -997,6 +1003,18 @@ Keyboard( unsigned char c, int x, int y )
 		case 'p':
 		case 'P':
 			NowProjection = PERSP;
+			break;
+
+		case 'a':
+		case 'A':
+			NowIter = std::min(NowIter + 1, 7);
+			regenerate();
+			break;
+		
+		case 's':
+		case 'S':
+			NowIter = std::max(NowIter - 1, 0);
+			regenerate();
 			break;
 
 		case 'q':
@@ -1128,6 +1146,7 @@ Reset( )
 	NowColor = YELLOW;
 	NowProjection = PERSP;
 	Xrot = Yrot = 0.;
+	NowIter = 0;
 }
 
 

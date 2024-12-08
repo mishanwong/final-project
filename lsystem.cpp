@@ -11,33 +11,39 @@
 class LSystem {
     Plant plant;
 	State state;
+	std::string word;
+
     glm::vec3 Xaxis = {1., 0., 0.};
     glm::vec3 Yaxis = {0., 1., 0.};
     glm::vec3 Zaxis = {0., 0., 1.};
 
     public:
-    LSystem(Plant plant) : plant(plant), state(plant.initialState) {}
+    LSystem(Plant plant) : plant(plant), state(plant.initialState), word(plant.initialWord) {}
     
-    std::string generate() {
-	    if (plant.numIter == 0) return plant.word;
+	void resetWord() {
+		word = plant.initialWord;
+	}
+
+    void generate(int numIter) {
+	    if (numIter == 0 || numIter > plant.maxIter) return;
 
 	    std::string newWord = "";
-	    	for (int i = 0; i < plant.word.length(); i++) {
-	    		char c = plant.word[i];
+	    	for (int i = 0; i < word.length(); i++) {
+	    		char c = word[i];
 	    		if (plant.rules.count(c)) {
 	    			newWord += plant.rules[c];
 	    		} else {
 	    			newWord += c;
 	    		}
 	    	}
-        plant.numIter -= 1;
-		plant.word = newWord;
-	    return generate();
+        // plant.numIterIter -= 1;ss
+		word = newWord;
+		generate(numIter - 1);
     }; 
 
 
-	std::string getWord() {
-		return plant.word;
+	int getMaxIter() {
+		return plant.maxIter;
 	}
     void drawLine() {
     	glm::vec3 endPoint = state.position + glm::normalize(state.dir) * state.len;
@@ -96,8 +102,8 @@ class LSystem {
     }
 
     void drawPlant() {
-    	for (int i = 0; i < plant.word.length(); i++) {
-    		char c = plant.word[i];
+    	for (int i = 0; i < word.length(); i++) {
+    		char c = word[i];
     		draw(c);
     	};
 		state = plant.initialState;
