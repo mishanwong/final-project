@@ -36,6 +36,10 @@ class LSystem {
 		word = plant.initialWord;
 	}
 
+	void setInitialPosition(glm::vec3 pos) {
+		plant.initialState.position = pos;
+	}
+
     void generate(int numIter) {
 	    if (numIter == 0 || numIter > plant.maxIter) return;
 
@@ -60,7 +64,7 @@ class LSystem {
     	glm::vec3 endPoint = state.position + glm::normalize(state.dir) * state.len;
 
         glBegin(GL_LINES);
-			glColor3f(0.8, 0.33, 0.10); // Line color
+			glColor3f(0.5, 0.4, 0.3); // Grayish Brown
         	glVertex3f(state.position.x, state.position.y, state.position.z);  
         	glVertex3f(endPoint.x, endPoint.y, endPoint.z);  
         glEnd();

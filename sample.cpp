@@ -76,7 +76,7 @@ const int ESCAPE = 0x1b;
 
 // initial window size:
 
-const int INIT_WINDOW_SIZE = 1200;
+const int INIT_WINDOW_SIZE = 800;
 
 
 // multiplication factors for input interaction:
@@ -122,6 +122,7 @@ enum ButtonVals
 
 // window background color (rgba):
 
+// const GLfloat BACKCOLOR[ ] = { 0.57, 0.92, 0.98, 1. };
 const GLfloat BACKCOLOR[ ] = { 0., 0., 0., 1. };
 
 // line width for the axes:
@@ -351,37 +352,93 @@ MulArray3(float factor, float a, float b, float c )
 //#include "bmptotexture.cpp"
 // #include "loadobjfile.cpp"
 //#include "keytime.cpp"
-#include "glslprogram.cpp"
+// #include "glslprogram.cpp"
 // #include "perlin_noise.cpp"
 // #include "vertexbufferobject.cpp"
 #include "lsystem.cpp"
 #define STB_PERLIN_IMPLEMENTATION
 #include "stb_perlin.h"
 
+glm::vec3 getPositionVertex(float vx, float vz) {
+	int x = (vx - X0) / DX;
+	int z = (vz - Z0) / DZ;
+	float vy = heights[z][x];
+	return glm::vec3(vx, vy, vz);
+}
+
 std::vector<Plant> plants = {
-	// Tree (c)
+	// Tree 1 (c)
 	{
 		"F",
 		4,
 		22.5,
 		{
-			glm::vec3(Ranf(-2.5,2.5), 0., Ranf(-2.5, 1.5)),
+			getPositionVertex(-1.5, -1.),
 			glm::vec3(0., 1., 0.),
 			0.05
 		},
 		{
 			{'F', "FF+[+F-<F->F]-[-F+^F+vF]"}
 		},
-		glm::vec3(0.18, 0.51, 0.33),
-		0.02
+		glm::vec3(1., 0.8, 0.2), //Golden yellow
+		0.015
 	},
-	// Tree (e)
+	// Tree 2 (c)
+	{
+		"F",
+		4,
+		22.5,
+		{
+			getPositionVertex(-1., -2.),
+			glm::vec3(0., 1., 0.),
+			0.05
+		},
+		{
+			{'F', "FF+[+F-<F->F]-[-F+^F+vF]"}
+		},
+		glm::vec3(1., 0.5, 0.), // Fiery orange
+		0.015
+	},
+	// Tree 3 (c)
+	{
+		"F",
+		4,
+		22.5,
+		{
+			getPositionVertex(0., 0.),
+			glm::vec3(0., 1., 0.),
+			0.05
+		},
+		{
+			{'F', "FF+[+F-<F->F]-[-F+^F+vF]"}
+		},
+		glm::vec3(0.7, 0.2, 0.1), // Rust Red
+		0.015
+	},
+	// Tree 4 (e)
 	{
 		"X",
 		5,
 		20.f,
 		{
-			glm::vec3(Ranf(-2.5, 2.5), 0, Ranf(-2.5, 1.5)),
+			getPositionVertex(1.2, 1.5),
+			glm::vec3(0., 1., 0),
+			0.015
+		},
+		{
+			{'X', "F[+X][<<<<X][>>>>X][-X][<<<<X][>>>>X]FX"},
+			{'F', "FF"}
+		},
+		glm::vec3(0.8, 0.6, 1.), // Light Lavender
+		0.012
+	},
+	// Tree 5 (e)
+	{
+		"X",
+		5,
+		20.f,
+		{
+			getPositionVertex(2., -1.5),
 			glm::vec3(0., 1., 0),
 			0.03
 		},
@@ -389,9 +446,28 @@ std::vector<Plant> plants = {
 			{'X', "F[+X][<<<<X][>>>>X][-X][<<<<X][>>>>X]FX"},
 			{'F', "FF"}
 		},
-		glm::vec3(0.99, 0.46, 0.9),
-		0.008
-	}
+		glm::vec3(1., 0.75, 0.8), // Soft Pink
+		0.012
+	},
+	// Tree 6 (e)
+	{
+		"X",
+		5,
+		20.f,
+		{
+			getPositionVertex(0.5, 1.5),
+			glm::vec3(0., 1., 0),
+			0.03
+		},
+		{
+			{'X', "F[+X][<<<<X][>>>>X][-X][<<<<X][>>>>X]FX"},
+			{'F', "FF"}
+		},
+		glm::vec3(1.0, 1.0, 0.3), // Vibrant Yellow
+		0.012
+	},
+
+
 };
 std::vector<LSystem> lsystems;
 
@@ -528,8 +604,8 @@ Display( )
 	glLoadIdentity( );
 
 	// set the eye position, look-at position, and up-vector:
-	glm::vec3 eye(0., 1., 5.);
-	glm::vec3 look(0., 0., 0.);
+	glm::vec3 eye(0., 1.5, 5.);
+	glm::vec3 look(0., 0, -5.);
 	glm::vec3 up(0., 1., 0.);
 	glm::mat4 modelview = glm::lookAt(eye, look, up);
 
@@ -582,7 +658,11 @@ Display( )
 	
 	// Draw the Perlin noise terrain
 	int ilight = GL_LIGHT0;
-	GLfloat light_position[] = { 1.0f, 1.0f, 1.0f, 0.0f };  // Directional light
+	float xlight = 10. * cos(M_2_PI * Time);
+	float ylight = 10. * sin(M_2_PI * Time);
+	// float xlight = 1.;
+	// float ylight = 1.;
+	GLfloat light_position[] = { xlight, ylight, 0.0f, 1.f };  // Directional light
 	glLightfv( ilight, GL_POSITION,  light_position);
 	glLightfv( ilight, GL_AMBIENT,   MulArray3( 0.1f,  1.f, 1.f, 1.f ) );
 	glLightfv( ilight, GL_DIFFUSE,   MulArray3( 0.6f, 1.f, 1.f, 1.f ) );
@@ -592,8 +672,6 @@ Display( )
 	glLightf ( ilight, GL_QUADRATIC_ATTENUATION, 0. );
 	glLightf( ilight, GL_SPOT_CUTOFF, 180. );
 	glEnable( ilight );
-	// SetSpotLight(GL_LIGHT0, 0., 5., 0., 0, 0., 0., 1., 1., 1.);
-	// SetPointLight(GL_LIGHT0, 0., 5, 0, 1., 1., 1.);
 	glEnable(GL_LIGHTING);
 	glCallList(TerrainDL);
 	glDisable(GL_LIGHTING);
@@ -603,6 +681,7 @@ Display( )
 	for (int i = 0; i < lsystems.size(); i++) {
 		lsystems[i].drawPlant();
 	};
+
 	
 
 
@@ -1008,9 +1087,8 @@ InitLists( )
 	// Create rolling grid with Perlin Noise
 	TerrainDL = glGenLists(1);
 	glNewList(TerrainDL, GL_COMPILE);
-	SetMaterial( 0.4f, 0.79f, 0.42f, 30.f );
-	// drawTerrain();
-	// glEndList();
+	SetMaterial(0.4, 0.6, 0.3, 10.); // Moss Green - this looks good
+
 
 
 	// Generate height map
