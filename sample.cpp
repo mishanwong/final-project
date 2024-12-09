@@ -664,7 +664,7 @@ Display( )
 	// float ylight = 1.;
 	GLfloat light_position[] = { xlight, ylight, 0.0f, 1.f };  // Directional light
 	glLightfv( ilight, GL_POSITION,  light_position);
-	glLightfv( ilight, GL_AMBIENT,   MulArray3( 0.1f,  1.f, 1.f, 1.f ) );
+	glLightfv( ilight, GL_AMBIENT,   MulArray3( 0.3f,  1.f, 1.f, 1.f ) );
 	glLightfv( ilight, GL_DIFFUSE,   MulArray3( 0.6f, 1.f, 1.f, 1.f ) );
 	glLightfv( ilight, GL_SPECULAR,  MulArray3( 0.4f, 1.f, 1.f, 1.f ) );
 	glLightf ( ilight, GL_CONSTANT_ATTENUATION, 1. );

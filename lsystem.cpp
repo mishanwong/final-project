@@ -64,7 +64,7 @@ class LSystem {
     	glm::vec3 endPoint = state.position + glm::normalize(state.dir) * state.len;
 
         glBegin(GL_LINES);
-			glColor3f(0.5, 0.4, 0.3); // Grayish Brown
+			glColor3f(0.6, 0.5, 0.4); // Grayish Brown
         	glVertex3f(state.position.x, state.position.y, state.position.z);  
         	glVertex3f(endPoint.x, endPoint.y, endPoint.z);  
         glEnd();
