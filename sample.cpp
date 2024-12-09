@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <string>
 #include <stack>
+#include <cstring> // for strdup
 
 #define GLM_FORCE_RADIANS
 #include "glm/vec2.hpp"
@@ -30,9 +31,10 @@
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
+#include <OpenGL/gl3.h>
 #else
 #include "glew.h"
-#include <GL/gl.h>
+// #include <GL/gl.h>
 #include <GL/glu.h>
 #endif
 
@@ -193,6 +195,7 @@ int		ActiveButton;			// current button that is down
 GLuint	AxesList;				// list to hold the axes
 int		AxesOn;					// != 0 means to draw the axes
 GLuint	GridDL;				// object display list
+GLuint 	TerrainDL;
 int		DebugOn;				// != 0 means to print debugging info
 int		DepthCueOn;				// != 0 means to use intensity depth cueing
 int		DepthBufferOn;			// != 0 means to use the z-buffer
@@ -209,12 +212,22 @@ float	Xrot, Yrot;				// rotation angles in degrees
 const float D2R = M_PI / 180.f;
 
 // Constants for the terrain grid
-const float W = 3.;
-const float H = 3.;
-const float scale = 0.05f ;
-const int cols = W * 2 / scale;
-const int rows = H * 2/ scale;
-float heightmap[rows][cols];
+// const float W = 3.;
+// const float H = 3.;
+// const float scale = 0.05f ;
+// const int cols = W * 2 / scale;
+// const int rows = H * 2/ scale;
+// float heightmap[rows][cols];
+
+/*
+const int gridWidth = 6;
+const int gridHeight = 6;
+const float gridSpacing = 0.1f; // Distance between vertices
+*/
+
+
+// std::vector<std::vector<float>> heights(gridWidth, std::vector<float>(gridHeight));
+
 
 // function prototypes:
 
@@ -250,17 +263,21 @@ float			Unit(float [3], float [3]);
 float			Unit(float [3]);
 
 // Constants for the grid
-#define XSIDE	6.f			// length of the x side of the grid
+#define XSIDE	10.f			// length of the x side of the grid
 #define X0      (-XSIDE/2.)		// where one side starts
-#define NX	10			// how many points in x
+#define XE 		(XSIDE/2.) // where x ends
+#define NX	1000			// how many points in x
 #define DX	( XSIDE/(float)NX )	// change in x between the points
 
 #define YGRID	0.f			// y-height of the grid
 
-#define ZSIDE	6.f			// length of the z side of the grid
+#define ZSIDE	10.f			// length of the z side of the grid
 #define Z0      (-ZSIDE/2.)		// where one side starts
-#define NZ	10			// how many points in z
+#define ZE 	(ZSIDE/2.) 			// where z side ends
+#define NZ	1000			// how many points in z
 #define DZ	( ZSIDE/(float)NZ )	// change in z between the points
+
+std::vector<std::vector<float>> heights(NZ, std::vector<float>(NX));
 
 // Constants for grass
 // #define NUMX 100
@@ -334,10 +351,48 @@ MulArray3(float factor, float a, float b, float c )
 //#include "bmptotexture.cpp"
 // #include "loadobjfile.cpp"
 //#include "keytime.cpp"
-// #include "glslprogram.cpp"
+#include "glslprogram.cpp"
 // #include "perlin_noise.cpp"
 // #include "vertexbufferobject.cpp"
 #include "lsystem.cpp"
+#define STB_PERLIN_IMPLEMENTATION
+#include "stb_perlin.h"
+
+// GLSLProgram Terrain;
+/*
+const int gridSize = 100; // Number of grid cells in one direction
+const float gridSpacing = 1.0f; // Spacing between grid points
+const float noiseScale = 0.1f; // Scale for Perlin Noise
+const float heightMultiplier = 10.0f; // Amplifies terrain height
+
+std::vector<std::vector<float>> heightMap;
+
+void generateHeightMap() {
+    heightMap.resize(gridSize, std::vector<float>(gridSize));
+    for (int z = 0; z < gridSize; ++z) {
+        for (int x = 0; x < gridSize; ++x) {
+            float nx = x * noiseScale;
+            float nz = z * noiseScale;
+            heightMap[z][x] = stb_perlin_noise3(nx, 0.0, nz, 0, 0, 0) * heightMultiplier;
+        }
+    }
+}
+
+void drawTerrain() {
+    //glColor3f(0.4f, 0.8f, 0.2f); // Set terrain color (e.g., green)
+
+    for (int z = 0; z < gridSize - 1; ++z) {
+        glBegin(GL_TRIANGLE_STRIP);
+        for (int x = 0; x < gridSize; ++x) {
+            // Vertex 1
+            glVertex3f(x * gridSpacing, heightMap[z][x], z * gridSpacing);
+            // Vertex 2
+            glVertex3f(x * gridSpacing, heightMap[z + 1][x], (z + 1) * gridSpacing);
+        }
+        glEnd();
+    }
+}
+*/
 
 
 std::vector<Plant> plants = {
@@ -561,18 +616,25 @@ Display( )
 	// since we are using glScalef( ), be sure the normals get unitized:
 	glEnable( GL_NORMALIZE );
 
-	// glColor3f(0.67, 0.4, 0.23);
-	glTranslatef(0., -0.5, 0.);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-
-	glCallList(GridDL);
 	
+	// Draw the flat grid
+	// glColor3f(0.67, 0.4, 0.23);
+	/*
+	glTranslatef(0., -0.5, 0.);
+	// glEnable(GL_LIGHTING);
+	// glEnable(GL_LIGHT0);
+	glCallList(GridDL);
 	glDisable(GL_LIGHTING);
+	*/
+
+	glCallList(TerrainDL);
+	glDisable(GL_LIGHTING);
+
+
 	// Draw L-System trees
 	for (int i = 0; i < lsystems.size(); i++) {
 		lsystems[i].drawPlant();
-	}
+	};
 	
 
 
@@ -932,6 +994,7 @@ InitGraphics( )
 
 	// all other setups go here, such as GLSLProgram and KeyTime setups:
 	
+	// Create instances of L-Systems
 	for (int i = 0; i < plants.size(); i++) {
 		lsystems.push_back(plants[i]);
 	};
@@ -975,6 +1038,39 @@ InitLists( )
         }
 	glEndList( );
 
+	// Create rolling grid with Perlin Noise
+	TerrainDL = glGenLists(1);
+	glNewList(TerrainDL, GL_COMPILE);
+	SetMaterial( 0.4f, 0.79f, 0.42f, 30.f );
+	// drawTerrain();
+	// glEndList();
+
+
+	// Generate height map
+	float frequency = 3.f; // Controls the "zoom" level of the noise
+	float amplitude = 0.75f; // Controls the maximum height of the terrain
+
+	for (int x = 0; x < NX; x++) {
+	    for (int z = 0; z < NZ; z++) {
+			// Normalize x and z to be between 0 and 1
+			float nx = (float) x * frequency / NX;
+	        float nz = (float) z * frequency / NZ;
+	        heights[x][z] = stb_perlin_noise3(nx, 0.1f, nz, 0, 0, 0) * amplitude;
+	    }
+	}
+
+	// Draw terrain
+	for (int z = 0; z < NZ - 1; z++) {
+		glBegin(GL_TRIANGLE_STRIP);
+		for (int x = 0; x < NX; x++) {
+			glVertex3f(X0 + x * DX, heights[z][x], Z0 + z * DZ);
+			glVertex3f(X0 + x * DX, heights[z+1][x], Z0 + (z+1) * DZ);
+		}
+		glEnd();
+	}
+	
+	glEndList();
+	
 	// create the axes:
 
 	AxesList = glGenLists( 1 );
