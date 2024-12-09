@@ -344,7 +344,7 @@ MulArray3(float factor, float a, float b, float c )
 // these are here for when you need them -- just uncomment the ones you need:
 
 // #include "setmaterial.cpp"
-// #include "setlight.cpp"
+#include "setlight.cpp"
 // #include "osusphere.cpp"
 // #include "osucone.cpp"
 //#include "osutorus.cpp"
@@ -357,43 +357,6 @@ MulArray3(float factor, float a, float b, float c )
 #include "lsystem.cpp"
 #define STB_PERLIN_IMPLEMENTATION
 #include "stb_perlin.h"
-
-// GLSLProgram Terrain;
-/*
-const int gridSize = 100; // Number of grid cells in one direction
-const float gridSpacing = 1.0f; // Spacing between grid points
-const float noiseScale = 0.1f; // Scale for Perlin Noise
-const float heightMultiplier = 10.0f; // Amplifies terrain height
-
-std::vector<std::vector<float>> heightMap;
-
-void generateHeightMap() {
-    heightMap.resize(gridSize, std::vector<float>(gridSize));
-    for (int z = 0; z < gridSize; ++z) {
-        for (int x = 0; x < gridSize; ++x) {
-            float nx = x * noiseScale;
-            float nz = z * noiseScale;
-            heightMap[z][x] = stb_perlin_noise3(nx, 0.0, nz, 0, 0, 0) * heightMultiplier;
-        }
-    }
-}
-
-void drawTerrain() {
-    //glColor3f(0.4f, 0.8f, 0.2f); // Set terrain color (e.g., green)
-
-    for (int z = 0; z < gridSize - 1; ++z) {
-        glBegin(GL_TRIANGLE_STRIP);
-        for (int x = 0; x < gridSize; ++x) {
-            // Vertex 1
-            glVertex3f(x * gridSpacing, heightMap[z][x], z * gridSpacing);
-            // Vertex 2
-            glVertex3f(x * gridSpacing, heightMap[z + 1][x], (z + 1) * gridSpacing);
-        }
-        glEnd();
-    }
-}
-*/
-
 
 std::vector<Plant> plants = {
 	// Tree (c)
@@ -529,7 +492,7 @@ Display( )
 
 	// specify shading to be flat:
 
-	glShadeModel( GL_FLAT );
+	glShadeModel( GL_SMOOTH );
 
 	// set the viewport to be a square centered in the window:
 
@@ -617,16 +580,21 @@ Display( )
 	glEnable( GL_NORMALIZE );
 
 	
-	// Draw the flat grid
-	// glColor3f(0.67, 0.4, 0.23);
-	/*
-	glTranslatef(0., -0.5, 0.);
-	// glEnable(GL_LIGHTING);
-	// glEnable(GL_LIGHT0);
-	glCallList(GridDL);
-	glDisable(GL_LIGHTING);
-	*/
-
+	// Draw the Perlin noise terrain
+	int ilight = GL_LIGHT0;
+	GLfloat light_position[] = { 1.0f, 1.0f, 1.0f, 0.0f };  // Directional light
+	glLightfv( ilight, GL_POSITION,  light_position);
+	glLightfv( ilight, GL_AMBIENT,   MulArray3( 0.1f,  1.f, 1.f, 1.f ) );
+	glLightfv( ilight, GL_DIFFUSE,   MulArray3( 0.6f, 1.f, 1.f, 1.f ) );
+	glLightfv( ilight, GL_SPECULAR,  MulArray3( 0.4f, 1.f, 1.f, 1.f ) );
+	glLightf ( ilight, GL_CONSTANT_ATTENUATION, 1. );
+	glLightf ( ilight, GL_LINEAR_ATTENUATION, 0. );
+	glLightf ( ilight, GL_QUADRATIC_ATTENUATION, 0. );
+	glLightf( ilight, GL_SPOT_CUTOFF, 180. );
+	glEnable( ilight );
+	// SetSpotLight(GL_LIGHT0, 0., 5., 0., 0, 0., 0., 1., 1., 1.);
+	// SetPointLight(GL_LIGHT0, 0., 5, 0, 1., 1., 1.);
+	glEnable(GL_LIGHTING);
 	glCallList(TerrainDL);
 	glDisable(GL_LIGHTING);
 
@@ -1004,7 +972,6 @@ InitGraphics( )
 
 }
 
-
 // initialize the display lists that will not change:
 // (a display list is a way to store opengl commands in
 //  memory so that they can be played back efficiently at a later time
@@ -1048,14 +1015,14 @@ InitLists( )
 
 	// Generate height map
 	float frequency = 3.f; // Controls the "zoom" level of the noise
-	float amplitude = 0.75f; // Controls the maximum height of the terrain
+	float amplitude = 1.f; // Controls the maximum height of the terrain
 
-	for (int x = 0; x < NX; x++) {
-	    for (int z = 0; z < NZ; z++) {
+	for (int z = 0; z < NZ; z++) {
+	    for (int x = 0; x < NX; x++) {
 			// Normalize x and z to be between 0 and 1
 			float nx = (float) x * frequency / NX;
 	        float nz = (float) z * frequency / NZ;
-	        heights[x][z] = stb_perlin_noise3(nx, 0.1f, nz, 0, 0, 0) * amplitude;
+	        heights[z][x] = stb_perlin_noise3(nx, 0.1f, nz, 0, 0, 0) * amplitude;
 	    }
 	}
 
@@ -1063,6 +1030,17 @@ InitLists( )
 	for (int z = 0; z < NZ - 1; z++) {
 		glBegin(GL_TRIANGLE_STRIP);
 		for (int x = 0; x < NX; x++) {
+			if (x != 0 && z != 0) {
+				glm::vec3 thisPoint(X0 + x * DX, heights[z][x], Z0 + z * DZ);
+				glm::vec3 prevPoint1(X0 + (x-1) * DX, heights[z][x-1], Z0 + z * DZ);
+				glm::vec3 prevPoint2(X0 + (x) * DX, heights[z-1][x], Z0 + (z - 1) * DZ);
+				glm::vec3 v1 = prevPoint1 - thisPoint; 
+    			glm::vec3 v2 = prevPoint2 - thisPoint; 
+    			glm::vec3 normal = glm::cross(v1, v2);
+    			glm::normalize(normal);
+				glNormal3f(normal.x, -normal.y, normal.z);
+			}
+			// glNormal3f(0., 1., 0.);
 			glVertex3f(X0 + x * DX, heights[z][x], Z0 + z * DZ);
 			glVertex3f(X0 + x * DX, heights[z+1][x], Z0 + (z+1) * DZ);
 		}
@@ -1070,7 +1048,7 @@ InitLists( )
 	}
 	
 	glEndList();
-	
+
 	// create the axes:
 
 	AxesList = glGenLists( 1 );
